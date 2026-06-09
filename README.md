@@ -93,8 +93,6 @@ Keep the `grokking-visualizer` directory beside it so the embedded logit visuali
 
 This project was created as an educational and portfolio-oriented exploration of grokking, mechanistic interpretability, and the internal computations of a small Transformer trained on an algorithmic task.
 
-## Copyright
+## License
 
-Copyright (c) 2026 Jose Lara. All rights reserved.
-
-This source code is proprietary. No permission is granted to copy, modify, distribute, sublicense, or reuse this software, or any substantial portion of it, without prior written permission from the copyright holder.
+This project is available under the [MIT License](LICENSE).
