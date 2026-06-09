@@ -1,0 +1,566 @@
+:root {
+      --bg: #030402;
+      --panel: #0b0b07;
+      --ink: #d4c393;
+      --ink-soft: #9f9272;
+      --ink-dim: #6f664f;
+      --accent: #f0b718;
+      --accent-soft: rgba(240, 183, 24, 0.34);
+      --shadow: rgba(212, 195, 147, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 84% 6%, rgba(34, 128, 128, 0.28), transparent 14rem),
+        radial-gradient(circle at 76% 4%, rgba(15, 94, 146, 0.25), transparent 10rem),
+        linear-gradient(180deg, #000 0%, var(--bg) 62%, #010101 100%);
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+      overflow-x: hidden;
+    }
+
+    .stage {
+      width: min(1180px, 96vw);
+      padding: 28px 18px 34px;
+      position: relative;
+      transition: opacity 460ms ease, transform 520ms ease, filter 460ms ease;
+    }
+
+    body.logit-open .stage {
+      opacity: 0;
+      transform: translateX(-42px) scale(0.97);
+      filter: blur(5px);
+      pointer-events: none;
+    }
+
+    .logit-view {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      z-index: 20;
+      background: #050505;
+      opacity: 0;
+      transform: translateX(42px);
+      pointer-events: none;
+      transition: opacity 460ms ease, transform 520ms ease;
+    }
+
+    body.logit-open .logit-view {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+
+    .logit-view iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      border: 0;
+      background: #050505;
+    }
+
+    .logit-back {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      z-index: 2;
+      padding: 9px 18px;
+      border: 1px solid rgba(212, 195, 147, 0.72);
+      border-radius: 999px;
+      color: var(--ink);
+      background: rgba(5, 5, 5, 0.82);
+      font: 700 12px "Trebuchet MS", Verdana, sans-serif;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+    }
+
+    .logit-back:hover,
+    .logit-back:focus-visible {
+      background: rgba(212, 195, 147, 0.15);
+      outline: none;
+    }
+
+    .diagram {
+      position: relative;
+      height: 365px;
+      border-radius: 22px;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px) 0 0 / 38px 38px,
+        radial-gradient(circle at 48% 50%, rgba(212,195,147,0.08), transparent 24rem),
+        rgba(0, 0, 0, 0.68);
+      box-shadow: 0 22px 70px rgba(0, 0, 0, 0.7), inset 0 0 0 1px rgba(212, 195, 147, 0.08);
+      overflow: hidden;
+    }
+
+    svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .title {
+      font-size: 22px;
+      font-style: italic;
+      letter-spacing: 0.12em;
+      fill: var(--ink);
+    }
+
+    .label {
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      fill: var(--ink);
+    }
+
+    .label-small {
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.07em;
+      fill: var(--ink);
+    }
+
+    .number {
+      font-size: 17px;
+      fill: var(--ink);
+    }
+
+    .muted {
+      fill: var(--ink-soft);
+    }
+
+    .box {
+      fill: rgba(11, 11, 7, 0.74);
+      stroke: var(--ink-soft);
+      stroke-width: 3;
+      filter: drop-shadow(0 0 9px var(--shadow));
+    }
+
+    .thin-box {
+      fill: rgba(9, 9, 6, 0.82);
+      stroke: var(--ink-dim);
+      stroke-width: 2;
+    }
+
+    .wire {
+      fill: none;
+      stroke: var(--ink-soft);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0.85;
+    }
+
+    .wire-dim {
+      fill: none;
+      stroke: var(--ink-dim);
+      stroke-width: 1.5;
+      opacity: 0.72;
+    }
+
+    .dash {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 3;
+      stroke-dasharray: 4 5;
+      stroke-linecap: round;
+    }
+
+    .arrow {
+      fill: var(--ink-soft);
+    }
+
+    .node {
+      fill: #292719;
+      stroke: var(--ink);
+      stroke-width: 2.6;
+    }
+
+    .node-filled {
+      fill: var(--ink);
+      stroke: var(--ink);
+      stroke-width: 1.8;
+    }
+
+    .node-accent {
+      fill: #090905;
+      stroke: var(--accent);
+      stroke-width: 3;
+    }
+
+    .grid-dot {
+      fill: #2a2719;
+      stroke: var(--ink);
+      stroke-width: 2.1;
+      transition: fill 180ms ease, filter 180ms ease;
+    }
+
+    .grid-dot.selected {
+      fill: var(--ink);
+      filter: drop-shadow(0 0 5px rgba(212, 195, 147, 0.55));
+    }
+
+    .token-block-instance .grid-dot {
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .tiny-dot {
+      fill: #211f14;
+      stroke: var(--ink-soft);
+      stroke-width: 1.6;
+      transition: fill 220ms ease, filter 220ms ease;
+    }
+
+    .embedding-level-1 {
+      fill: rgba(212, 195, 147, 0.22);
+    }
+
+    .embedding-level-2 {
+      fill: rgba(212, 195, 147, 0.4);
+      filter: drop-shadow(0 0 2px rgba(212, 195, 147, 0.16));
+    }
+
+    .embedding-level-3 {
+      fill: rgba(212, 195, 147, 0.58);
+      filter: drop-shadow(0 0 3px rgba(212, 195, 147, 0.25));
+    }
+
+    .embedding-level-4 {
+      fill: rgba(212, 195, 147, 0.78);
+      filter: drop-shadow(0 0 4px rgba(212, 195, 147, 0.34));
+    }
+
+    .embedding-level-5 {
+      fill: var(--ink);
+      filter: drop-shadow(0 0 5px rgba(212, 195, 147, 0.48));
+    }
+
+    #token-embedding-panel {
+      transition: y 650ms ease, height 650ms ease;
+    }
+
+    #token-embedding-visual {
+      transform: translate(15px, 0);
+      transition: transform 650ms ease;
+    }
+
+    #token-embedding-heading {
+      transition: transform 650ms ease;
+    }
+
+    #token-embedding-visual .full-token-row {
+      opacity: 1;
+      transition: opacity 300ms ease;
+    }
+
+    .diagram.token-embedding-panel-compact #token-embedding-panel {
+      y: 106px;
+      height: 158px;
+    }
+
+    .diagram.token-embedding-panel-compact #token-embedding-visual {
+      transform: translate(15px, 53px);
+    }
+
+    .diagram.token-embedding-panel-compact #token-embedding-heading {
+      transform: translateY(38px);
+    }
+
+    .diagram.token-embedding-content-compact
+      #token-embedding-visual
+      .full-token-row {
+      opacity: 0;
+    }
+
+    #embedding-process,
+    #h0-result-layer {
+      transition: opacity 520ms ease, transform 620ms ease;
+    }
+
+    #embedding-process {
+      transform-origin: 0 0;
+      transform-box: view-box;
+    }
+
+    #embedding-operation {
+      transition: transform 620ms ease;
+    }
+
+    .input-embedding-arrow {
+      transition: opacity 220ms ease;
+    }
+
+    #input-to-embedding-arrow-compact {
+      opacity: 0;
+    }
+
+    #h0-result-layer {
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(24px, -13px);
+    }
+
+    .diagram.h0-result #embedding-process {
+      transform: translate(20px, 54px) scale(0.64);
+    }
+
+    .diagram.h0-result #embedding-operation {
+      transform: translateX(2px);
+    }
+
+    .diagram.h0-result #input-to-embedding-arrow {
+      opacity: 0;
+    }
+
+    .diagram.h0-result #input-to-embedding-arrow-compact {
+      opacity: 1;
+    }
+
+    .diagram.h0-result #h0-result-layer {
+      opacity: 1;
+      pointer-events: all;
+      transform: translate(0, -13px);
+    }
+
+    .equals-button {
+      cursor: default;
+      opacity: 0.3;
+      pointer-events: none;
+      transform: translate(1088px, 185px);
+      transition: opacity 220ms ease, filter 220ms ease, transform 620ms ease;
+    }
+
+    .equals-button rect {
+      fill: rgba(212, 195, 147, 0.08);
+      stroke: var(--ink-dim);
+      stroke-width: 2;
+    }
+
+    .equals-button text {
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      fill: var(--ink);
+    }
+
+    .equals-button.enabled {
+      cursor: pointer;
+      opacity: 1;
+      pointer-events: all;
+      filter: drop-shadow(0 0 8px rgba(212, 195, 147, 0.28));
+    }
+
+    .equals-button.enabled rect {
+      stroke: var(--ink-soft);
+    }
+
+    .diagram.h0-result .equals-button {
+      transform: translate(1136px, 185px);
+    }
+
+    .matrix-cell {
+      fill: rgba(212, 195, 147, 0.42);
+      stroke: rgba(212, 195, 147, 0.5);
+      stroke-width: 1;
+    }
+
+    .matrix-cell.hot {
+      fill: rgba(212, 195, 147, 0.9);
+    }
+
+    .attention-head-frame {
+      fill: rgba(11, 11, 7, 0.38);
+      stroke: var(--ink-dim);
+      stroke-width: 3;
+    }
+
+    .attention-head-node {
+      fill: #3e382b;
+      stroke: var(--ink);
+      stroke-width: 4;
+    }
+
+    .attention-head-tiny {
+      fill: var(--ink-dim);
+      stroke: var(--ink);
+      stroke-width: 3;
+    }
+
+    .attention-head-wire {
+      fill: none;
+      stroke: var(--ink-soft);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0.95;
+    }
+
+    .attention-head-grid {
+      fill: rgba(11, 11, 7, 0.58);
+      stroke: var(--ink-soft);
+      stroke-width: 4;
+    }
+
+    .attention-head-fill {
+      fill: var(--ink);
+      opacity: 0.96;
+    }
+
+    .attention-head-fill.lower {
+      opacity: 0.72;
+    }
+
+    .mlp-connection {
+      stroke: var(--ink-soft);
+      stroke-width: 1;
+      opacity: 0.52;
+    }
+
+    .mlp-node {
+      fill: #3e382b;
+      stroke: var(--ink);
+      stroke-width: 2.4;
+    }
+
+    .mlp-node.active {
+      fill: var(--ink);
+      filter: drop-shadow(0 0 4px rgba(212, 195, 147, 0.35));
+    }
+
+    .mlp-ellipsis {
+      fill: var(--ink-soft);
+    }
+
+    .caption {
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      fill: var(--ink-soft);
+    }
+
+    .glow {
+      filter: drop-shadow(0 0 6px rgba(240, 183, 24, 0.55));
+    }
+
+    .pipeline-trigger {
+      cursor: pointer;
+      fill: rgba(240, 183, 24, 0);
+      pointer-events: all;
+      stroke: transparent;
+      stroke-width: 3;
+      transition: fill 220ms ease, stroke 220ms ease;
+    }
+
+    .pipeline-trigger:hover,
+    .pipeline-trigger:focus-visible {
+      fill: rgba(240, 183, 24, 0.08);
+      stroke: rgba(240, 183, 24, 0.55);
+      outline: none;
+    }
+
+    .pipeline-trigger.clicked {
+      fill: rgba(240, 183, 24, 0.07);
+      stroke: rgba(240, 183, 24, 0.82);
+      filter: drop-shadow(0 0 6px rgba(240, 183, 24, 0.28));
+    }
+
+    #embedding-focus-layer {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 560ms ease;
+    }
+
+    .diagram svg > *:not(defs):not(#embedding-focus-layer) {
+      transition: opacity 560ms ease;
+    }
+
+    .diagram.embedding-focus #embedding-focus-layer {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .diagram.embedding-focus svg > *:not(defs):not(#embedding-focus-layer) {
+      opacity: 0;
+    }
+
+    .diagram.embedding-final svg > *:not(defs):not(#embedding-focus-layer) {
+      display: none;
+    }
+
+    .diagram.embedding-focus .input-cluster {
+      filter: drop-shadow(0 0 14px rgba(212, 195, 147, 0.22));
+    }
+
+    .focus-scrim {
+      fill: rgba(0, 0, 0, 0.92);
+    }
+
+    .focus-panel {
+      fill: rgba(10, 10, 6, 0.96);
+      stroke: var(--ink-soft);
+      stroke-width: 2.5;
+      filter: drop-shadow(0 0 16px rgba(212, 195, 147, 0.13));
+    }
+
+    .focus-title {
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      fill: var(--ink);
+    }
+
+    .focus-subtitle,
+    .axis-label {
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      fill: var(--ink-soft);
+    }
+
+    .focus-back {
+      cursor: pointer;
+    }
+
+    .focus-back rect {
+      fill: rgba(240, 183, 24, 0.1);
+      stroke: var(--accent);
+      stroke-width: 2;
+    }
+
+    .focus-back text {
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      fill: var(--accent);
+    }
+
+    @media (max-width: 800px) {
+      .stage {
+        width: 100vw;
+        padding: 10px 6px;
+      }
+
+      .diagram {
+        height: 300px;
+        border-radius: 14px;
+      }
+    }

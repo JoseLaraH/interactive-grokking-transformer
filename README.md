@@ -41,13 +41,17 @@ Main configuration:
 ## Project Structure
 
 ```text
-transformer_pipeline_visual.html
+index.html
+styles.css
+app.js
 grokking-visualizer/
 |-- visualizador_logit112_superior.html
 `-- activation_surfaces_seed_0.js
 ```
 
-- `transformer_pipeline_visual.html` is the main interactive pipeline.
+- `index.html` defines the main interactive pipeline structure.
+- `styles.css` contains the visual design, responsive layout, and transitions.
+- `app.js` contains the interactions, matrix states, and view navigation.
 - `visualizador_logit112_superior.html` renders the logit surface.
 - `activation_surfaces_seed_0.js` contains the precomputed model data used by the surface visualizer.
 
@@ -55,7 +59,7 @@ grokking-visualizer/
 
 The project is fully static and does not require a backend.
 
-Open `transformer_pipeline_visual.html` directly in a modern browser, or serve the directory locally:
+Open `index.html` directly in a modern browser, or serve the directory locally:
 
 ```bash
 python -m http.server 8000
@@ -64,18 +68,12 @@ python -m http.server 8000
 Then visit:
 
 ```text
-http://localhost:8000/transformer_pipeline_visual.html
+http://localhost:8000/
 ```
 
 ## Deployment
 
 The web experience can be deployed on GitHub Pages, Cloudflare Pages, Netlify, or Vercel.
-
-For a root deployment, rename:
-
-```text
-transformer_pipeline_visual.html -> index.html
-```
 
 Keep the `grokking-visualizer` directory beside it so the embedded logit visualization and its data remain accessible.
 
