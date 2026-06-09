@@ -1,0 +1,860 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vista superior logit 112</title>
+  <style>
+    :root {
+      --bg: #050505;
+      --ink: #e8dfc9;
+      --muted: #8d8474;
+      --gold: #e7b92f;
+      --line: rgba(232, 223, 201, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow: hidden;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: Georgia, "Times New Roman", serif;
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      background: var(--bg);
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    .hud {
+      position: fixed;
+      left: 18px;
+      top: 16px;
+      width: min(490px, calc(100vw - 36px));
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      background: rgba(5, 5, 5, 0.8);
+      backdrop-filter: blur(10px);
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 22px;
+      letter-spacing: 0;
+    }
+
+    .meta {
+      margin: 0;
+      color: var(--muted);
+      font: 13px/1.45 Arial, sans-serif;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    label {
+      display: grid;
+      gap: 5px;
+      color: var(--muted);
+      font: 700 11px Arial, sans-serif;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .pair {
+      display: grid;
+      grid-template-columns: 1fr 70px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .lock-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      color: var(--muted);
+      font: 700 11px Arial, sans-serif;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .lock-row input {
+      width: auto;
+    }
+
+    .view-3d {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+    }
+
+    .view-3d summary {
+      color: var(--gold);
+      cursor: pointer;
+      font: 700 12px Arial, sans-serif;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .rotation-panel {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .rotation-row {
+      display: grid;
+      grid-template-columns: 58px 1fr 34px;
+      gap: 8px;
+      align-items: center;
+      color: var(--muted);
+      font: 700 11px Arial, sans-serif;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    button {
+      height: 28px;
+      border: 1px solid var(--line);
+      color: var(--ink);
+      background: #111;
+      font: 700 12px Arial, sans-serif;
+      cursor: pointer;
+    }
+
+    .view-presets {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    input {
+      width: 100%;
+      accent-color: var(--gold);
+    }
+
+    input[type="number"] {
+      padding: 6px 8px;
+      border: 1px solid var(--line);
+      color: var(--ink);
+      background: #101010;
+      font: 700 14px Arial, sans-serif;
+    }
+
+    .readout {
+      position: fixed;
+      right: 18px;
+      bottom: 16px;
+      width: min(380px, calc(100vw - 36px));
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      background: rgba(5, 5, 5, 0.8);
+      color: var(--muted);
+      font: 13px/1.5 Arial, sans-serif;
+      backdrop-filter: blur(10px);
+    }
+
+    strong { color: var(--gold); }
+
+    code {
+      color: var(--gold);
+      font-family: "Cascadia Mono", Consolas, monospace;
+      font-weight: 700;
+    }
+
+    @media (max-width: 760px) {
+      .hud {
+        left: 8px;
+        top: 8px;
+        width: calc(100vw - 16px);
+      }
+
+      .controls {
+        grid-template-columns: 1fr;
+      }
+
+      .readout {
+        left: 8px;
+        right: 8px;
+        bottom: 8px;
+        width: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="heatmap"></canvas>
+
+  <section class="hud">
+    <h1>Logit de clase 112</h1>
+    <p class="meta">Puedes mover el punto con controles o arrastrando sobre el mapa.</p>
+    <div class="controls">
+      <label>
+        x = a <span id="xText">0</span>
+        <span class="pair">
+          <input id="xRange" type="range" min="0" max="112" value="0">
+          <input id="xNumber" type="number" min="0" max="112" value="0">
+        </span>
+      </label>
+      <label>
+        y = b <span id="yText">112</span>
+        <span class="pair">
+          <input id="yRange" type="range" min="0" max="112" value="112">
+          <input id="yNumber" type="number" min="0" max="112" value="112">
+        </span>
+      </label>
+      <label>
+        suma x + y <span id="sumText">112</span>
+        <span class="pair">
+          <input id="sumRange" type="range" min="0" max="224" value="112">
+          <input id="sumNumber" type="number" min="0" max="224" value="112">
+        </span>
+      </label>
+    </div>
+    <label class="lock-row">
+      <input id="lockSum" type="checkbox">
+      suma libre
+    </label>
+    <details id="view3d" class="view-3d">
+      <summary>vista 3D</summary>
+      <div class="rotation-panel">
+        <div class="rotation-row">
+          <span>rot x</span>
+          <input id="rotX" type="range" min="-180" max="180" step="0.5" value="0">
+          <button id="resetX" type="button" title="Reiniciar eje X">X</button>
+        </div>
+        <div class="rotation-row">
+          <span>rot y</span>
+          <input id="rotY" type="range" min="-180" max="180" step="0.5" value="0">
+          <button id="resetY" type="button" title="Reiniciar eje Y">Y</button>
+        </div>
+        <div class="rotation-row">
+          <span>rot z</span>
+          <input id="rotZ" type="range" min="-180" max="180" step="0.5" value="0">
+          <button id="resetZ" type="button" title="Reiniciar eje Z">Z</button>
+        </div>
+        <div class="view-presets">
+          <button id="viewXY" type="button">XY</button>
+          <button id="viewZX" type="button">ZX</button>
+          <button id="viewZY" type="button">ZY</button>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <section class="readout" id="readout"></section>
+
+  <script src="activation_surfaces_seed_0.js"></script>
+  <script>
+    const canvas = document.querySelector("#heatmap");
+    const ctx = canvas.getContext("2d");
+    const readout = document.querySelector("#readout");
+    const xRange = document.querySelector("#xRange");
+    const yRange = document.querySelector("#yRange");
+    const xNumber = document.querySelector("#xNumber");
+    const yNumber = document.querySelector("#yNumber");
+    const sumRange = document.querySelector("#sumRange");
+    const sumNumber = document.querySelector("#sumNumber");
+    const lockSum = document.querySelector("#lockSum");
+    const view3d = document.querySelector("#view3d");
+    const rotX = document.querySelector("#rotX");
+    const rotY = document.querySelector("#rotY");
+    const rotZ = document.querySelector("#rotZ");
+    const resetX = document.querySelector("#resetX");
+    const resetY = document.querySelector("#resetY");
+    const resetZ = document.querySelector("#resetZ");
+    const viewXY = document.querySelector("#viewXY");
+    const viewZX = document.querySelector("#viewZX");
+    const viewZY = document.querySelector("#viewZY");
+    const xText = document.querySelector("#xText");
+    const yText = document.querySelector("#yText");
+    const sumText = document.querySelector("#sumText");
+    const values = window.GROKKING_SURFACE_DATA.surfaces.logit_112.values;
+    const modulus = window.GROKKING_SURFACE_DATA.modulus;
+
+    let plot = { left: 0, top: 0, size: 0, cell: 1 };
+    let panning = false;
+    let panStart = null;
+    let pointDragging = false;
+    let rotating = false;
+    let rotationStart = null;
+    let panX = 0;
+    let panY = 0;
+    let zoom = 1;
+    let lastMiddleClickAt = 0;
+
+    let min = Infinity;
+    let max = -Infinity;
+    values.forEach((row) => row.forEach((value) => {
+      min = Math.min(min, value);
+      max = Math.max(max, value);
+    }));
+    const span = max - min || 1;
+    const zAbsMax = Math.ceil(Math.max(Math.abs(min), Math.abs(max)));
+
+    function palette(t) {
+      const stops = [
+        [10, 18, 88],
+        [24, 111, 177],
+        [26, 205, 138],
+        [232, 218, 70],
+      ];
+      const x = Math.max(0, Math.min(1, t)) * (stops.length - 1);
+      const i = Math.floor(x);
+      const f = x - i;
+      const a = stops[i];
+      const b = stops[Math.min(stops.length - 1, i + 1)];
+      const rgb = a.map((value, index) => Math.round(value + (b[index] - value) * f));
+      return `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+    }
+
+    function clamp(value, maxValue) {
+      const parsed = Number.parseInt(value, 10);
+      if (Number.isNaN(parsed)) return 0;
+      return Math.max(0, Math.min(maxValue, parsed));
+    }
+
+    function setPoint(x, y, changed = "both") {
+      const nextX = clamp(x, 112);
+      const nextY = clamp(y, 112);
+      let finalX = nextX;
+      let finalY = nextY;
+      let finalSum = nextX + nextY;
+
+      if (!lockSum.checked) {
+        finalSum = clamp(sumRange.value, 224);
+        if (changed === "x") {
+          finalX = nextX;
+          finalY = finalSum - finalX;
+        } else if (changed === "y") {
+          finalY = nextY;
+          finalX = finalSum - finalY;
+        } else {
+          finalX = Math.floor(finalSum / 2);
+          finalY = finalSum - finalX;
+        }
+        finalX = clamp(finalX, 112);
+        finalY = clamp(finalY, 112);
+        finalSum = finalX + finalY;
+      }
+
+      xRange.value = finalX;
+      xNumber.value = finalX;
+      yRange.value = finalY;
+      yNumber.value = finalY;
+      sumRange.value = finalSum;
+      sumNumber.value = finalSum;
+      draw();
+    }
+
+    function setSum(sumValue) {
+      const nextSum = clamp(sumValue, 224);
+      const nextX = Math.floor(nextSum / 2);
+      const nextY = nextSum - nextX;
+      if (!lockSum.checked) {
+        xRange.value = nextX;
+        xNumber.value = nextX;
+        yRange.value = nextY;
+        yNumber.value = nextY;
+        sumRange.value = nextSum;
+        sumNumber.value = nextSum;
+        draw();
+      } else {
+        sumRange.value = nextSum;
+        sumNumber.value = nextSum;
+        draw();
+      }
+    }
+
+    function resize() {
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.floor(window.innerWidth * ratio);
+      canvas.height = Math.floor(window.innerHeight * ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      clampPan();
+      draw();
+    }
+
+    function clampPan() {
+      const baseSize = Math.min(window.innerWidth * 0.64, window.innerHeight * 0.64);
+      const size = baseSize * zoom;
+      const visibleMargin = Math.min(size * 0.42, Math.min(window.innerWidth, window.innerHeight) * 0.36);
+      const maxX = Math.max(0, (size + window.innerWidth) / 2 - visibleMargin);
+      const maxY = Math.max(0, (size + window.innerHeight) / 2 - visibleMargin);
+      panX = Math.max(-maxX, Math.min(maxX, panX));
+      panY = Math.max(-maxY, Math.min(maxY, panY));
+    }
+
+    function rotationAngles() {
+      if (!view3d.open) {
+        return { x: 0, y: 0, z: 0 };
+      }
+      return {
+        x: Number(rotX.value) * Math.PI / 180,
+        y: Number(rotY.value) * Math.PI / 180,
+        z: Number(rotZ.value) * Math.PI / 180,
+      };
+    }
+
+    function rotatePoint(point, angles) {
+      let [x, y, z] = point;
+      const cosX = Math.cos(angles.x);
+      const sinX = Math.sin(angles.x);
+      let y1 = y * cosX - z * sinX;
+      let z1 = y * sinX + z * cosX;
+      y = y1;
+      z = z1;
+
+      const cosY = Math.cos(angles.y);
+      const sinY = Math.sin(angles.y);
+      let x1 = x * cosY + z * sinY;
+      z1 = -x * sinY + z * cosY;
+      x = x1;
+      z = z1;
+
+      const cosZ = Math.cos(angles.z);
+      const sinZ = Math.sin(angles.z);
+      x1 = x * cosZ - y * sinZ;
+      y1 = x * sinZ + y * cosZ;
+      return [x1, y1, z];
+    }
+
+    function projectLocal(localX, localY, layout, localZ = 0) {
+      const rotated = rotatePoint([localX, localY, localZ], layout.angles);
+      const depth = layout.size * 4.4;
+      const perspective = depth / (depth + rotated[2]);
+      return {
+        x: layout.cx + rotated[0] * perspective,
+        y: layout.cy - rotated[1] * perspective,
+        z: rotated[2],
+      };
+    }
+
+    function zHeight(value, layout) {
+      if (!view3d.open) return 0;
+      return -(value / zAbsMax) * layout.size * 0.21;
+    }
+
+    function gridPoint(x, y, layout, useHeight = false) {
+      const localX = (x / 112 - 0.5) * layout.size;
+      const localY = (y / 112 - 0.5) * layout.size;
+      const ix = clamp(Math.round(x), 112);
+      const iy = clamp(Math.round(y), 112);
+      const localZ = useHeight ? zHeight(values[ix][iy], layout) : 0;
+      return projectLocal(localX, localY, layout, localZ);
+    }
+
+    function drawLine(points) {
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length; i += 1) {
+        ctx.lineTo(points[i].x, points[i].y);
+      }
+      ctx.stroke();
+    }
+
+    function drawLabel(text, point, dx = 0, dy = 0) {
+      ctx.fillText(text, point.x + dx, point.y + dy);
+    }
+
+    function drawAxes(layout) {
+      ctx.strokeStyle = "#e8dfc9";
+      ctx.lineWidth = 2;
+      drawLine([gridPoint(0, 0, layout), gridPoint(112, 0, layout)]);
+      drawLine([gridPoint(0, 0, layout), gridPoint(0, 112, layout)]);
+      if (view3d.open) {
+        drawLine([
+          projectLocal(-layout.size / 2, -layout.size / 2, layout, -layout.size * 0.24),
+          projectLocal(-layout.size / 2, -layout.size / 2, layout, layout.size * 0.24),
+        ]);
+      }
+
+      ctx.fillStyle = "#e8dfc9";
+      ctx.font = "700 15px Georgia";
+      [0, 28, 56, 84, 112].forEach((tick) => {
+        const xPoint = gridPoint(tick, 0, layout);
+        const yPoint = gridPoint(0, tick, layout);
+        const xTickA = projectLocal((tick / 112 - 0.5) * layout.size, -layout.size / 2 - 6, layout);
+        const xTickB = projectLocal((tick / 112 - 0.5) * layout.size, -layout.size / 2 + 6, layout);
+        const yTickA = projectLocal(-layout.size / 2 - 6, (tick / 112 - 0.5) * layout.size, layout);
+        const yTickB = projectLocal(-layout.size / 2 + 6, (tick / 112 - 0.5) * layout.size, layout);
+        drawLine([xTickA, xTickB]);
+        drawLine([yTickA, yTickB]);
+        drawLabel(String(tick), xPoint, -9, 24);
+        drawLabel(String(tick), yPoint, -34, 5);
+      });
+
+      if (view3d.open) {
+        [0, 0.25, 0.5, 0.75, 1].forEach((ratio) => {
+          const localZ = (0.5 - ratio) * layout.size * 0.48;
+          const tickA = projectLocal(-layout.size / 2 - 7, -layout.size / 2, layout, localZ);
+          const tickB = projectLocal(-layout.size / 2 + 7, -layout.size / 2, layout, localZ);
+          const labelPoint = projectLocal(-layout.size / 2 - 11, -layout.size / 2, layout, localZ);
+          const value = -zAbsMax + (zAbsMax * 2 * ratio);
+          drawLine([tickA, tickB]);
+          drawLabel(String(Math.round(value)), labelPoint, -42, 5);
+        });
+      }
+
+      ctx.fillStyle = "#e7b92f";
+      ctx.font = "700 20px Georgia";
+      drawLabel("x = a", gridPoint(112, 0, layout), 16, 7);
+      drawLabel("y = b", gridPoint(0, 112, layout), -18, -16);
+      if (view3d.open) {
+        drawLabel(
+          "z = logit 112",
+          projectLocal(-layout.size / 2, -layout.size / 2, layout, layout.size * 0.28),
+          -20,
+          -10,
+        );
+      }
+    }
+
+    function draw() {
+      const baseSize = Math.min(window.innerWidth * 0.64, window.innerHeight * 0.64);
+      const size = baseSize * zoom;
+      const left = (window.innerWidth - size) / 2 + 14 + panX;
+      const top = (window.innerHeight - size) / 2 - 8 + panY;
+      const cell = size / modulus;
+      const selectedX = clamp(xRange.value, 112);
+      const selectedY = clamp(yRange.value, 112);
+      const layout = {
+        left,
+        top,
+        size,
+        cell,
+        cx: left + size / 2,
+        cy: top + size / 2,
+        angles: rotationAngles(),
+      };
+      plot = layout;
+
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+      const tiles = [];
+      for (let x = 0; x < modulus; x += 1) {
+        for (let y = 0; y < modulus; y += 1) {
+          const t = (values[x][y] - min) / span;
+          const p00 = gridPoint(x, y, layout, true);
+          const p10 = gridPoint(Math.min(112, x + 1), y, layout, true);
+          const p11 = gridPoint(Math.min(112, x + 1), Math.min(112, y + 1), layout, true);
+          const p01 = gridPoint(x, Math.min(112, y + 1), layout, true);
+          tiles.push({
+            points: [p00, p10, p11, p01],
+            color: palette(t),
+            depth: p00.z + p10.z + p11.z + p01.z,
+          });
+        }
+      }
+
+      tiles.sort((a, b) => a.depth - b.depth);
+      tiles.forEach((tile) => {
+        ctx.fillStyle = tile.color;
+        ctx.beginPath();
+        ctx.moveTo(tile.points[0].x, tile.points[0].y);
+        ctx.lineTo(tile.points[1].x, tile.points[1].y);
+        ctx.lineTo(tile.points[2].x, tile.points[2].y);
+        ctx.lineTo(tile.points[3].x, tile.points[3].y);
+        ctx.closePath();
+        ctx.fill();
+      });
+
+      ctx.strokeStyle = "rgba(232,223,201,.72)";
+      ctx.lineWidth = 1.5;
+      drawLine([
+        gridPoint(0, 0, layout),
+        gridPoint(112, 0, layout),
+        gridPoint(112, 112, layout),
+        gridPoint(0, 112, layout),
+        gridPoint(0, 0, layout),
+      ]);
+      drawAxes(layout);
+
+      const marker = gridPoint(selectedX, selectedY, layout, true);
+      const markerBase = gridPoint(selectedX, selectedY, layout, false);
+
+      ctx.strokeStyle = "rgba(231,185,47,.86)";
+      ctx.lineWidth = 1.35;
+      ctx.setLineDash([5, 4]);
+      drawLine([gridPoint(selectedX, 0, layout, true), gridPoint(selectedX, 112, layout, true)]);
+      drawLine([gridPoint(0, selectedY, layout, true), gridPoint(112, selectedY, layout, true)]);
+      if (view3d.open) {
+        drawLine([markerBase, marker]);
+      }
+      ctx.setLineDash([]);
+
+      ctx.strokeStyle = "#050505";
+      ctx.fillStyle = "#e7b92f";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      const markerRadius = Math.max(3.5, Math.min(9, (cell * 0.9) / Math.sqrt(zoom)));
+      plot.marker = marker;
+      plot.markerRadius = markerRadius;
+      ctx.arc(marker.x, marker.y, markerRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      const currentSum = selectedX + selectedY;
+      const currentResult = currentSum % modulus;
+      xText.textContent = selectedX;
+      yText.textContent = selectedY;
+      sumText.textContent = currentSum;
+      xNumber.value = selectedX;
+      yNumber.value = selectedY;
+      xRange.value = selectedX;
+      yRange.value = selectedY;
+      sumRange.value = currentSum;
+      sumNumber.value = currentSum;
+
+      readout.innerHTML =
+        `entrada marcada <code>[${selectedX}, ${selectedY}, 113]</code><br>` +
+        `suma directa <code>${currentSum}</code><br>` +
+        `resultado modular <code>${currentResult}</code><br>` +
+        `suma fija <code>${lockSum.checked ? "libre" : "activada"}</code><br>` +
+        `valor logit 112 <strong>${values[selectedX][selectedY].toFixed(5)}</strong><br>` +
+        `checkpoint epoca <code>${window.GROKKING_SURFACE_DATA.epoch}</code>`;
+    }
+
+    function canvasToPoint(event) {
+      if (view3d.open) {
+        return null;
+      }
+      const rect = canvas.getBoundingClientRect();
+      const px = event.clientX - rect.left;
+      const py = event.clientY - rect.top;
+      if (
+        px < plot.left || px > plot.left + plot.size ||
+        py < plot.top || py > plot.top + plot.size
+      ) {
+        return null;
+      }
+      return {
+        x: clamp(Math.floor((px - plot.left) / plot.cell), 112),
+        y: clamp(112 - Math.floor((py - plot.top) / plot.cell), 112),
+      };
+    }
+
+    function canvasToNearestSurfacePoint(event) {
+      const rect = canvas.getBoundingClientRect();
+      const px = event.clientX - rect.left;
+      const py = event.clientY - rect.top;
+      const constrainedSum = !lockSum.checked
+        ? clamp(sumRange.value, 224)
+        : null;
+      let nearest = null;
+      let nearestDistance = Infinity;
+
+      for (let x = 0; x < modulus; x += 1) {
+        for (let y = 0; y < modulus; y += 1) {
+          if (constrainedSum !== null && x + y !== constrainedSum) {
+            continue;
+          }
+          const projected = gridPoint(x, y, plot, true);
+          const distance =
+            (projected.x - px) ** 2 + (projected.y - py) ** 2;
+          if (distance < nearestDistance) {
+            nearestDistance = distance;
+            nearest = { x, y };
+          }
+        }
+      }
+      return nearest;
+    }
+
+    canvas.addEventListener("contextmenu", (event) => {
+      event.preventDefault();
+    });
+
+    canvas.addEventListener("pointerdown", (event) => {
+      if (event.button === 1) {
+        const now = performance.now();
+        if (now - lastMiddleClickAt < 360) {
+          event.preventDefault();
+          zoom = 1;
+          panX = 0;
+          panY = 0;
+          pointDragging = false;
+          panning = false;
+          panStart = null;
+          rotating = false;
+          rotationStart = null;
+          lastMiddleClickAt = 0;
+          draw();
+          return;
+        }
+        lastMiddleClickAt = now;
+      }
+
+      if (event.button === 0) {
+        event.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const pointerX = event.clientX - rect.left;
+        const pointerY = event.clientY - rect.top;
+        const markerDistance = Math.hypot(
+          pointerX - plot.marker.x,
+          pointerY - plot.marker.y,
+        );
+
+        if (markerDistance <= plot.markerRadius + 8) {
+          pointDragging = true;
+          canvas.setPointerCapture(event.pointerId);
+          return;
+        }
+
+        panning = true;
+        panStart = {
+          pointerId: event.pointerId,
+          startX: event.clientX,
+          startY: event.clientY,
+          panX,
+          panY,
+        };
+        canvas.setPointerCapture(event.pointerId);
+        return;
+      }
+
+      if (event.button === 2) {
+        event.preventDefault();
+        view3d.open = true;
+        rotating = true;
+        rotationStart = {
+          pointerId: event.pointerId,
+          startX: event.clientX,
+          startY: event.clientY,
+          rotX: Number(rotX.value),
+          rotY: Number(rotY.value),
+        };
+        canvas.setPointerCapture(event.pointerId);
+        draw();
+        return;
+      }
+    });
+
+    canvas.addEventListener("pointermove", (event) => {
+      if (pointDragging) {
+        const point = canvasToNearestSurfacePoint(event);
+        if (point) {
+          setPoint(
+            point.x,
+            point.y,
+            lockSum.checked ? "both" : "x"
+          );
+        }
+        return;
+      }
+
+      if (panning && panStart) {
+        panX = panStart.panX + event.clientX - panStart.startX;
+        panY = panStart.panY + event.clientY - panStart.startY;
+        clampPan();
+        draw();
+        return;
+      }
+
+      if (rotating && rotationStart) {
+        const nextRotY =
+          rotationStart.rotY - (event.clientX - rotationStart.startX) * 0.45;
+        const nextRotX =
+          rotationStart.rotX - (event.clientY - rotationStart.startY) * 0.45;
+        rotY.value = Math.max(-180, Math.min(180, nextRotY));
+        rotX.value = Math.max(-180, Math.min(180, nextRotX));
+        draw();
+      }
+    });
+
+    canvas.addEventListener("pointerup", () => {
+      pointDragging = false;
+      panning = false;
+      panStart = null;
+      rotating = false;
+      rotationStart = null;
+    });
+
+    canvas.addEventListener("pointerleave", () => {
+      pointDragging = false;
+      panning = false;
+      panStart = null;
+      rotating = false;
+      rotationStart = null;
+    });
+
+    canvas.addEventListener("pointercancel", () => {
+      pointDragging = false;
+      panning = false;
+      panStart = null;
+      rotating = false;
+      rotationStart = null;
+    });
+
+    canvas.addEventListener("wheel", (event) => {
+      event.preventDefault();
+      const factor = Math.exp(-event.deltaY * 0.0012);
+      zoom = Math.max(0.45, Math.min(2.8, zoom * factor));
+      clampPan();
+      draw();
+    }, { passive: false });
+
+    xRange.addEventListener("input", () => setPoint(xRange.value, yRange.value, "x"));
+    yRange.addEventListener("input", () => setPoint(xRange.value, yRange.value, "y"));
+    xNumber.addEventListener("input", () => setPoint(xNumber.value, yNumber.value, "x"));
+    yNumber.addEventListener("input", () => setPoint(xNumber.value, yNumber.value, "y"));
+    sumRange.addEventListener("input", () => setSum(sumRange.value));
+    sumNumber.addEventListener("input", () => setSum(sumNumber.value));
+    lockSum.addEventListener("change", () => {
+      const currentX = clamp(xRange.value, 112);
+      const currentY = clamp(yRange.value, 112);
+      const currentSum = currentX + currentY;
+      sumRange.value = currentSum;
+      sumNumber.value = currentSum;
+      draw();
+    });
+    view3d.addEventListener("toggle", () => {
+      if (view3d.open) {
+        rotX.value = 0;
+        rotY.value = 0;
+        rotZ.value = 0;
+      }
+      draw();
+    });
+    [rotX, rotY, rotZ].forEach((control) => {
+      control.addEventListener("input", draw);
+    });
+    resetX.addEventListener("click", () => {
+      rotX.value = 0;
+      draw();
+    });
+    resetY.addEventListener("click", () => {
+      rotY.value = 0;
+      draw();
+    });
+    resetZ.addEventListener("click", () => {
+      rotZ.value = 0;
+      draw();
+    });
+    function setViewAngles(x, y, z) {
+      rotX.value = x;
+      rotY.value = y;
+      rotZ.value = z;
+      draw();
+    }
+
+    viewXY.addEventListener("click", () => setViewAngles(0, 0, 0));
+    viewZX.addEventListener("click", () => setViewAngles(90, 0, 0));
+    viewZY.addEventListener("click", () => setViewAngles(90, -90, 0));
+    window.addEventListener("resize", resize);
+    resize();
+  </script>
+</body>
+</html>

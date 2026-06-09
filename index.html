@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Transformer Pipeline Visual</title>
+  <style>
+    :root {
+      --bg: #030402;
+      --panel: #0b0b07;
+      --ink: #d4c393;
+      --ink-soft: #9f9272;
+      --ink-dim: #6f664f;
+      --accent: #f0b718;
+      --accent-soft: rgba(240, 183, 24, 0.34);
+      --shadow: rgba(212, 195, 147, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 84% 6%, rgba(34, 128, 128, 0.28), transparent 14rem),
+        radial-gradient(circle at 76% 4%, rgba(15, 94, 146, 0.25), transparent 10rem),
+        linear-gradient(180deg, #000 0%, var(--bg) 62%, #010101 100%);
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+      overflow-x: hidden;
+    }
+
+    .stage {
+      width: min(1180px, 96vw);
+      padding: 28px 18px 34px;
+      position: relative;
+      transition: opacity 460ms ease, transform 520ms ease, filter 460ms ease;
+    }
+
+    body.logit-open .stage {
+      opacity: 0;
+      transform: translateX(-42px) scale(0.97);
+      filter: blur(5px);
+      pointer-events: none;
+    }
+
+    .logit-view {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      z-index: 20;
+      background: #050505;
+      opacity: 0;
+      transform: translateX(42px);
+      pointer-events: none;
+      transition: opacity 460ms ease, transform 520ms ease;
+    }
+
+    body.logit-open .logit-view {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+
+    .logit-view iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      border: 0;
+      background: #050505;
+    }
+
+    .logit-back {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      z-index: 2;
+      padding: 9px 18px;
+      border: 1px solid rgba(212, 195, 147, 0.72);
+      border-radius: 999px;
+      color: var(--ink);
+      background: rgba(5, 5, 5, 0.82);
+      font: 700 12px "Trebuchet MS", Verdana, sans-serif;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+    }
+
+    .logit-back:hover,
+    .logit-back:focus-visible {
+      background: rgba(212, 195, 147, 0.15);
+      outline: none;
+    }
+
+    .diagram {
+      position: relative;
+      height: 365px;
+      border-radius: 22px;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px) 0 0 / 38px 38px,
+        radial-gradient(circle at 48% 50%, rgba(212,195,147,0.08), transparent 24rem),
+        rgba(0, 0, 0, 0.68);
+      box-shadow: 0 22px 70px rgba(0, 0, 0, 0.7), inset 0 0 0 1px rgba(212, 195, 147, 0.08);
+      overflow: hidden;
+    }
+
+    svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .title {
+      font-size: 22px;
+      font-style: italic;
+      letter-spacing: 0.12em;
+      fill: var(--ink);
+    }
+
+    .label {
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      fill: var(--ink);
+    }
+
+    .label-small {
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.07em;
+      fill: var(--ink);
+    }
+
+    .number {
+      font-size: 17px;
+      fill: var(--ink);
+    }
+
+    .muted {
+      fill: var(--ink-soft);
+    }
+
+    .box {
+      fill: rgba(11, 11, 7, 0.74);
+      stroke: var(--ink-soft);
+      stroke-width: 3;
+      filter: drop-shadow(0 0 9px var(--shadow));
+    }
+
+    .thin-box {
+      fill: rgba(9, 9, 6, 0.82);
+      stroke: var(--ink-dim);
+      stroke-width: 2;
+    }
+
+    .wire {
+      fill: none;
+      stroke: var(--ink-soft);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0.85;
+    }
+
+    .wire-dim {
+      fill: none;
+      stroke: var(--ink-dim);
+      stroke-width: 1.5;
+      opacity: 0.72;
+    }
+
+    .dash {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 3;
+      stroke-dasharray: 4 5;
+      stroke-linecap: round;
+    }
+
+    .arrow {
+      fill: var(--ink-soft);
+    }
+
+    .node {
+      fill: #292719;
+      stroke: var(--ink);
+      stroke-width: 2.6;
+    }
+
+    .node-filled {
+      fill: var(--ink);
+      stroke: var(--ink);
+      stroke-width: 1.8;
+    }
+
+    .node-accent {
+      fill: #090905;
+      stroke: var(--accent);
+      stroke-width: 3;
+    }
+
+    .grid-dot {
+      fill: #2a2719;
+      stroke: var(--ink);
+      stroke-width: 2.1;
+      transition: fill 180ms ease, filter 180ms ease;
+    }
+
+    .grid-dot.selected {
+      fill: var(--ink);
+      filter: drop-shadow(0 0 5px rgba(212, 195, 147, 0.55));
+    }
+
+    .token-block-instance .grid-dot {
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .tiny-dot {
+      fill: #211f14;
+      stroke: var(--ink-soft);
+      stroke-width: 1.6;
+      transition: fill 220ms ease, filter 220ms ease;
+    }
+
+    .embedding-level-1 {
+      fill: rgba(212, 195, 147, 0.22);
+    }
+
+    .embedding-level-2 {
+      fill: rgba(212, 195, 147, 0.4);
+      filter: drop-shadow(0 0 2px rgba(212, 195, 147, 0.16));
+    }
+
+    .embedding-level-3 {
+      fill: rgba(212, 195, 147, 0.58);
+      filter: drop-shadow(0 0 3px rgba(212, 195, 147, 0.25));
+    }
+
+    .embedding-level-4 {
+      fill: rgba(212, 195, 147, 0.78);
+      filter: drop-shadow(0 0 4px rgba(212, 195, 147, 0.34));
+    }
+
+    .embedding-level-5 {
+      fill: var(--ink);
+      filter: drop-shadow(0 0 5px rgba(212, 195, 147, 0.48));
+    }
+
+    #token-embedding-panel {
+      transition: y 650ms ease, height 650ms ease;
+    }
+
+    #token-embedding-visual {
+      transform: translate(15px, 0);
+      transition: transform 650ms ease;
+    }
+
+    #token-embedding-heading {
+      transition: transform 650ms ease;
+    }
+
+    #token-embedding-visual .full-token-row {
+      opacity: 1;
+      transition: opacity 300ms ease;
+    }
+
+    .diagram.token-embedding-panel-compact #token-embedding-panel {
+      y: 106px;
+      height: 158px;
+    }
+
+    .diagram.token-embedding-panel-compact #token-embedding-visual {
+      transform: translate(15px, 53px);
+    }
+
+    .diagram.token-embedding-panel-compact #token-embedding-heading {
+      transform: translateY(38px);
+    }
+
+    .diagram.token-embedding-content-compact
+      #token-embedding-visual
+      .full-token-row {
+      opacity: 0;
+    }
+
+    #embedding-process,
+    #h0-result-layer {
+      transition: opacity 520ms ease, transform 620ms ease;
+    }
+
+    #embedding-process {
+      transform-origin: 0 0;
+      transform-box: view-box;
+    }
+
+    #embedding-operation {
+      transition: transform 620ms ease;
+    }
+
+    .input-embedding-arrow {
+      transition: opacity 220ms ease;
+    }
+
+    #input-to-embedding-arrow-compact {
+      opacity: 0;
+    }
+
+    #h0-result-layer {
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(24px, -13px);
+    }
+
+    .diagram.h0-result #embedding-process {
+      transform: translate(20px, 54px) scale(0.64);
+    }
+
+    .diagram.h0-result #embedding-operation {
+      transform: translateX(2px);
+    }
+
+    .diagram.h0-result #input-to-embedding-arrow {
+      opacity: 0;
+    }
+
+    .diagram.h0-result #input-to-embedding-arrow-compact {
+      opacity: 1;
+    }
+
+    .diagram.h0-result #h0-result-layer {
+      opacity: 1;
+      pointer-events: all;
+      transform: translate(0, -13px);
+    }
+
+    .equals-button {
+      cursor: default;
+      opacity: 0.3;
+      pointer-events: none;
+      transform: translate(1088px, 185px);
+      transition: opacity 220ms ease, filter 220ms ease, transform 620ms ease;
+    }
+
+    .equals-button rect {
+      fill: rgba(212, 195, 147, 0.08);
+      stroke: var(--ink-dim);
+      stroke-width: 2;
+    }
+
+    .equals-button text {
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      fill: var(--ink);
+    }
+
+    .equals-button.enabled {
+      cursor: pointer;
+      opacity: 1;
+      pointer-events: all;
+      filter: drop-shadow(0 0 8px rgba(212, 195, 147, 0.28));
+    }
+
+    .equals-button.enabled rect {
+      stroke: var(--ink-soft);
+    }
+
+    .diagram.h0-result .equals-button {
+      transform: translate(1136px, 185px);
+    }
+
+    .matrix-cell {
+      fill: rgba(212, 195, 147, 0.42);
+      stroke: rgba(212, 195, 147, 0.5);
+      stroke-width: 1;
+    }
+
+    .matrix-cell.hot {
+      fill: rgba(212, 195, 147, 0.9);
+    }
+
+    .attention-head-frame {
+      fill: rgba(11, 11, 7, 0.38);
+      stroke: var(--ink-dim);
+      stroke-width: 3;
+    }
+
+    .attention-head-node {
+      fill: #3e382b;
+      stroke: var(--ink);
+      stroke-width: 4;
+    }
+
+    .attention-head-tiny {
+      fill: var(--ink-dim);
+      stroke: var(--ink);
+      stroke-width: 3;
+    }
+
+    .attention-head-wire {
+      fill: none;
+      stroke: var(--ink-soft);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0.95;
+    }
+
+    .attention-head-grid {
+      fill: rgba(11, 11, 7, 0.58);
+      stroke: var(--ink-soft);
+      stroke-width: 4;
+    }
+
+    .attention-head-fill {
+      fill: var(--ink);
+      opacity: 0.96;
+    }
+
+    .attention-head-fill.lower {
+      opacity: 0.72;
+    }
+
+    .mlp-connection {
+      stroke: var(--ink-soft);
+      stroke-width: 1;
+      opacity: 0.52;
+    }
+
+    .mlp-node {
+      fill: #3e382b;
+      stroke: var(--ink);
+      stroke-width: 2.4;
+    }
+
+    .mlp-node.active {
+      fill: var(--ink);
+      filter: drop-shadow(0 0 4px rgba(212, 195, 147, 0.35));
+    }
+
+    .mlp-ellipsis {
+      fill: var(--ink-soft);
+    }
+
+    .caption {
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      fill: var(--ink-soft);
+    }
+
+    .glow {
+      filter: drop-shadow(0 0 6px rgba(240, 183, 24, 0.55));
+    }
+
+    .pipeline-trigger {
+      cursor: pointer;
+      fill: rgba(240, 183, 24, 0);
+      pointer-events: all;
+      stroke: transparent;
+      stroke-width: 3;
+      transition: fill 220ms ease, stroke 220ms ease;
+    }
+
+    .pipeline-trigger:hover,
+    .pipeline-trigger:focus-visible {
+      fill: rgba(240, 183, 24, 0.08);
+      stroke: rgba(240, 183, 24, 0.55);
+      outline: none;
+    }
+
+    .pipeline-trigger.clicked {
+      fill: rgba(240, 183, 24, 0.07);
+      stroke: rgba(240, 183, 24, 0.82);
+      filter: drop-shadow(0 0 6px rgba(240, 183, 24, 0.28));
+    }
+
+    #embedding-focus-layer {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 560ms ease;
+    }
+
+    .diagram svg > *:not(defs):not(#embedding-focus-layer) {
+      transition: opacity 560ms ease;
+    }
+
+    .diagram.embedding-focus #embedding-focus-layer {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .diagram.embedding-focus svg > *:not(defs):not(#embedding-focus-layer) {
+      opacity: 0;
+    }
+
+    .diagram.embedding-final svg > *:not(defs):not(#embedding-focus-layer) {
+      display: none;
+    }
+
+    .diagram.embedding-focus .input-cluster {
+      filter: drop-shadow(0 0 14px rgba(212, 195, 147, 0.22));
+    }
+
+    .focus-scrim {
+      fill: rgba(0, 0, 0, 0.92);
+    }
+
+    .focus-panel {
+      fill: rgba(10, 10, 6, 0.96);
+      stroke: var(--ink-soft);
+      stroke-width: 2.5;
+      filter: drop-shadow(0 0 16px rgba(212, 195, 147, 0.13));
+    }
+
+    .focus-title {
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      fill: var(--ink);
+    }
+
+    .focus-subtitle,
+    .axis-label {
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      fill: var(--ink-soft);
+    }
+
+    .focus-back {
+      cursor: pointer;
+    }
+
+    .focus-back rect {
+      fill: rgba(240, 183, 24, 0.1);
+      stroke: var(--accent);
+      stroke-width: 2;
+    }
+
+    .focus-back text {
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      fill: var(--accent);
+    }
+
+    @media (max-width: 800px) {
+      .stage {
+        width: 100vw;
+        padding: 10px 6px;
+      }
+
+      .diagram {
+        height: 300px;
+        border-radius: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="stage" aria-label="Visualizacion de un pipeline transformer">
+    <section class="diagram">
+      <svg viewBox="0 0 1180 365" role="img" aria-labelledby="diagram-title diagram-desc">
+        <title id="diagram-title">Pipeline de embedding, probes, attention, MLP y unembedding</title>
+        <desc id="diagram-desc">
+          Diagrama oscuro inspirado en una arquitectura transformer, desde una entrada x y hasta una salida 114 por 1.
+        </desc>
+
+        <defs>
+          <marker id="arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+            <path class="arrow" d="M 0 0 L 10 5 L 0 10 z"></path>
+          </marker>
+          <marker id="attention-arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4.5" markerHeight="4.5" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#b9aa83"></path>
+          </marker>
+
+          <linearGradient id="panelGrad" x1="0" x2="1">
+            <stop offset="0%" stop-color="#070703" />
+            <stop offset="100%" stop-color="#13110b" />
+          </linearGradient>
+
+          <symbol id="token-block" viewBox="0 0 190 365" overflow="visible">
+            <text class="title" x="119.5" y="33" text-anchor="middle">x&nbsp;&nbsp;y =</text>
+            <rect class="box" x="72" y="48" width="95" height="285" rx="10"></rect>
+
+            <g class="number" text-anchor="end">
+              <text x="60" y="74">0</text>
+              <text x="60" y="98">1</text>
+              <text x="60" y="122">2</text>
+              <text x="60" y="146">3</text>
+              <text x="60" y="170">4</text>
+              <text x="60" y="194">5</text>
+              <text x="60" y="218">6</text>
+              <circle class="tiny-dot" cx="56" cy="238" r="2.8"></circle>
+              <circle class="tiny-dot" cx="56" cy="250" r="2.8"></circle>
+              <circle class="tiny-dot" cx="56" cy="262" r="2.8"></circle>
+              <text x="60" y="287">112</text>
+              <text x="60" y="313">113</text>
+            </g>
+
+            <g>
+              <circle class="grid-dot" cx="92" cy="69" r="9"></circle>
+              <circle class="grid-dot" cx="119.5" cy="69" r="9"></circle>
+              <circle class="grid-dot" cx="147" cy="69" r="9"></circle>
+              <circle class="grid-dot" cx="92" cy="93" r="9"></circle>
+              <circle class="grid-dot" cx="119.5" cy="93" r="9"></circle>
+              <circle class="grid-dot" cx="147" cy="93" r="9"></circle>
+              <circle class="grid-dot" cx="92" cy="117" r="9"></circle>
+              <circle class="grid-dot" cx="119.5" cy="117" r="9"></circle>
+              <circle class="grid-dot" cx="147" cy="117" r="9"></circle>
+              <circle class="grid-dot" cx="92" cy="141" r="9"></circle>
+              <circle class="grid-dot" cx="119.5" cy="141" r="9"></circle>
+              <circle class="grid-dot" cx="147" cy="141" r="9"></circle>
+              <circle class="grid-dot" cx="92" cy="165" r="9"></circle>
+              <circle class="grid-dot" cx="119.5" cy="165" r="9"></circle>
+              <circle class="grid-dot" cx="147" cy="165" r="9"></circle>
+              <circle class="grid-dot" cx="92" cy="189" r="9"></circle>
+              <circle class="grid-dot" cx="119.5" cy="189" r="9"></circle>
+              <circle class="grid-dot" cx="147" cy="189" r="9"></circle>
+              <circle class="grid-dot" cx="92" cy="213" r="9"></circle>
+              <circle class="grid-dot" cx="119.5" cy="213" r="9"></circle>
+              <circle class="grid-dot" cx="147" cy="213" r="9"></circle>
+              <circle class="tiny-dot" cx="92" cy="238" r="2.8"></circle>
+              <circle class="tiny-dot" cx="119.5" cy="238" r="2.8"></circle>
+              <circle class="tiny-dot" cx="147" cy="238" r="2.8"></circle>
+              <circle class="tiny-dot" cx="92" cy="250" r="2.8"></circle>
+              <circle class="tiny-dot" cx="119.5" cy="250" r="2.8"></circle>
+              <circle class="tiny-dot" cx="147" cy="250" r="2.8"></circle>
+              <circle class="tiny-dot" cx="92" cy="262" r="2.8"></circle>
+              <circle class="tiny-dot" cx="119.5" cy="262" r="2.8"></circle>
+              <circle class="tiny-dot" cx="147" cy="262" r="2.8"></circle>
+              <circle class="grid-dot" cx="92" cy="286" r="9"></circle>
+              <circle class="grid-dot" cx="119.5" cy="286" r="9"></circle>
+              <circle class="grid-dot" cx="147" cy="286" r="9"></circle>
+              <circle class="grid-dot" cx="92" cy="312" r="9"></circle>
+              <circle class="grid-dot" cx="119.5" cy="312" r="9"></circle>
+              <circle class="grid-dot" cx="147" cy="312" r="9"></circle>
+            </g>
+            <text class="caption" x="119.5" y="352" text-anchor="middle">114×3</text>
+          </symbol>
+        </defs>
+
+        <!-- Input matrix -->
+        <g class="input-cluster token-block-instance" transform="translate(18 0)"></g>
+
+        <path class="wire" d="M188 178 L263 178" marker-end="url(#arrowhead)"></path>
+        <text class="caption" x="196" y="204">EMBED</text>
+
+        <!-- Sparse linear probe left -->
+        <rect class="box" x="278" y="91" width="74" height="222" rx="8"></rect>
+
+        <g id="initial-h0-visual">
+          <circle class="tiny-dot" cx="296" cy="112" r="7"></circle>
+          <circle class="tiny-dot" cx="315" cy="112" r="7"></circle>
+          <circle class="tiny-dot" cx="334" cy="112" r="7"></circle>
+          <circle class="tiny-dot" cx="296" cy="136" r="7"></circle>
+          <circle class="tiny-dot" cx="315" cy="136" r="7"></circle>
+          <circle class="tiny-dot" cx="334" cy="136" r="7"></circle>
+          <circle class="tiny-dot" cx="296" cy="160" r="7"></circle>
+          <circle class="tiny-dot" cx="315" cy="160" r="7"></circle>
+          <circle class="tiny-dot" cx="334" cy="160" r="7"></circle>
+          <circle class="tiny-dot" cx="296" cy="184" r="7"></circle>
+          <circle class="tiny-dot" cx="315" cy="184" r="7"></circle>
+          <circle class="tiny-dot" cx="334" cy="184" r="7"></circle>
+          <circle class="tiny-dot" cx="296" cy="208" r="7"></circle>
+          <circle class="tiny-dot" cx="315" cy="208" r="7"></circle>
+          <circle class="tiny-dot" cx="334" cy="208" r="7"></circle>
+          <circle class="tiny-dot" cx="296" cy="230" r="2.4"></circle>
+          <circle class="tiny-dot" cx="296" cy="240" r="2.4"></circle>
+          <circle class="tiny-dot" cx="296" cy="250" r="2.4"></circle>
+          <circle class="tiny-dot" cx="315" cy="230" r="2.4"></circle>
+          <circle class="tiny-dot" cx="315" cy="240" r="2.4"></circle>
+          <circle class="tiny-dot" cx="315" cy="250" r="2.4"></circle>
+          <circle class="tiny-dot" cx="334" cy="230" r="2.4"></circle>
+          <circle class="tiny-dot" cx="334" cy="240" r="2.4"></circle>
+          <circle class="tiny-dot" cx="334" cy="250" r="2.4"></circle>
+          <circle class="tiny-dot" cx="296" cy="271" r="7"></circle>
+          <circle class="tiny-dot" cx="315" cy="271" r="7"></circle>
+          <circle class="tiny-dot" cx="334" cy="271" r="7"></circle>
+          <circle class="tiny-dot" cx="296" cy="295" r="7"></circle>
+          <circle class="tiny-dot" cx="315" cy="295" r="7"></circle>
+          <circle class="tiny-dot" cx="334" cy="295" r="7"></circle>
+        </g>
+        <text class="caption" x="315" y="337" text-anchor="middle">128×3</text>
+        <rect id="embedding-trigger" class="pipeline-trigger" data-block="embedding" x="270" y="83" width="90" height="262" rx="13" role="button" tabindex="0">
+          <title>Ver embeddings de token y posicion</title>
+        </rect>
+
+        <path class="wire" d="M354 178 L425 178" marker-end="url(#arrowhead)"></path>
+
+        <!-- Attention block -->
+        <rect class="box" x="428" y="39" width="220" height="313" rx="8" fill="url(#panelGrad)"></rect>
+        <text class="caption" x="538" y="333" text-anchor="middle">ATTENTION</text>
+
+        <defs>
+        <g id="attention-head-unit">
+          <rect class="attention-head-frame" x="94" y="78" width="442" height="240" rx="22"></rect>
+
+          <path class="attention-head-wire" d="M140 119 L210 148" marker-end="url(#attention-arrowhead)"></path>
+          <path class="attention-head-wire" d="M140 119 L210 248" marker-end="url(#attention-arrowhead)"></path>
+          <path class="attention-head-wire" d="M140 177 L210 148" marker-end="url(#attention-arrowhead)"></path>
+          <path class="attention-head-wire" d="M140 177 L210 248" marker-end="url(#attention-arrowhead)"></path>
+          <path class="attention-head-wire" d="M140 277 L210 148" marker-end="url(#attention-arrowhead)"></path>
+          <path class="attention-head-wire" d="M140 277 L210 248" marker-end="url(#attention-arrowhead)"></path>
+
+          <circle class="attention-head-node" cx="140" cy="119" r="18"></circle>
+          <circle class="attention-head-node" cx="210" cy="148" r="18"></circle>
+          <circle class="attention-head-node" cx="210" cy="248" r="18"></circle>
+          <circle class="attention-head-node" cx="140" cy="177" r="18"></circle>
+          <circle class="attention-head-tiny" cx="140" cy="215" r="2.7"></circle>
+          <circle class="attention-head-tiny" cx="140" cy="227" r="2.7"></circle>
+          <circle class="attention-head-tiny" cx="140" cy="239" r="2.7"></circle>
+          <circle class="attention-head-tiny" cx="210" cy="186" r="2.7"></circle>
+          <circle class="attention-head-tiny" cx="210" cy="198" r="2.7"></circle>
+          <circle class="attention-head-tiny" cx="210" cy="210" r="2.7"></circle>
+          <circle class="attention-head-node" cx="140" cy="277" r="18"></circle>
+          <circle class="attention-head-node" cx="300" cy="277" r="18"></circle>
+
+          <path class="attention-head-wire" d="M228 198 L250 198 L250 277 L282 277" marker-end="url(#attention-arrowhead)"></path>
+          <path class="attention-head-wire" d="M287 264 L313 290"></path>
+          <path class="attention-head-wire" d="M313 264 L287 290"></path>
+          <path class="attention-head-wire" d="M318 277 L504 277" marker-end="url(#attention-arrowhead)"></path>
+
+          <rect class="attention-head-grid" x="372" y="108" width="132" height="132"></rect>
+          <rect class="attention-head-fill" x="372" y="108" width="44" height="44"></rect>
+          <rect class="attention-head-fill lower" x="372" y="152" width="44" height="44"></rect>
+          <rect class="attention-head-fill lower" x="416" y="152" width="44" height="44"></rect>
+          <rect class="attention-head-fill lower" x="372" y="196" width="44" height="44"></rect>
+          <rect class="attention-head-fill lower" x="416" y="196" width="44" height="44"></rect>
+          <path class="attention-head-wire" d="M416 108 L416 240"></path>
+          <path class="attention-head-wire" d="M460 108 L460 240"></path>
+          <path class="attention-head-wire" d="M372 152 L504 152"></path>
+          <path class="attention-head-wire" d="M372 196 L504 196"></path>
+          <path class="attention-head-wire" d="M372 174 L300 174 L300 259" marker-end="url(#attention-arrowhead)"></path>
+        </g>
+        </defs>
+
+        <g class="attention-routing">
+          <path class="wire" d="M428 178 H456 Q466 178 466 168 V91.5 Q466 81.5 476 81.5 H482.5"></path>
+          <path class="wire" d="M466 147.5 L482.5 147.5"></path>
+          <path class="wire" d="M466 213.5 L482.5 213.5"></path>
+          <path class="wire" d="M456 178 Q466 178 466 188 V269.5 Q466 279.5 476 279.5 H482.5"></path>
+
+          <path class="wire" d="M593.5 81.5 H600 Q610 81.5 610 91.5 V168 Q610 178 620 178 H648"></path>
+          <path class="wire" d="M593.5 147.5 L610 147.5"></path>
+          <path class="wire" d="M593.5 213.5 L610 213.5"></path>
+          <path class="wire" d="M593.5 279.5 H600 Q610 279.5 610 269.5 V188 Q610 178 620 178"></path>
+        </g>
+
+        <use href="#attention-head-unit" transform="translate(459 32) scale(0.25)"></use>
+        <use href="#attention-head-unit" transform="translate(459 98) scale(0.25)"></use>
+        <use href="#attention-head-unit" transform="translate(459 164) scale(0.25)"></use>
+        <use href="#attention-head-unit" transform="translate(459 230) scale(0.25)"></use>
+
+        <path class="wire" d="M648 178 L752 178" marker-end="url(#arrowhead)"></path>
+
+        <!-- MLP -->
+        <rect class="box" x="755" y="39" width="180" height="313" rx="8"></rect>
+        <g id="mlp-content">
+          <g id="mlp-connections"></g>
+
+          <g id="mlp-left-column">
+            <circle class="mlp-node active" cx="785" cy="68" r="8.5"></circle>
+            <circle class="mlp-node active" cx="785" cy="96" r="8.5"></circle>
+            <circle class="mlp-node" cx="785" cy="124" r="8.5"></circle>
+            <circle class="mlp-node active" cx="785" cy="152" r="8.5"></circle>
+            <circle class="mlp-node" cx="785" cy="180" r="8.5"></circle>
+            <circle class="mlp-node active" cx="785" cy="208" r="8.5"></circle>
+            <circle class="mlp-ellipsis" cx="785" cy="228" r="2"></circle>
+            <circle class="mlp-ellipsis" cx="785" cy="238" r="2"></circle>
+            <circle class="mlp-ellipsis" cx="785" cy="248" r="2"></circle>
+            <circle class="mlp-node" cx="785" cy="276" r="8.5"></circle>
+          </g>
+
+          <g id="mlp-middle-column">
+            <circle class="mlp-node" cx="845" cy="54" r="8.5"></circle>
+            <circle class="mlp-node active" cx="845" cy="80" r="8.5"></circle>
+            <circle class="mlp-node" cx="845" cy="106" r="8.5"></circle>
+            <circle class="mlp-node active" cx="845" cy="132" r="8.5"></circle>
+            <circle class="mlp-node" cx="845" cy="158" r="8.5"></circle>
+            <circle class="mlp-node active" cx="845" cy="184" r="8.5"></circle>
+            <circle class="mlp-node" cx="845" cy="210" r="8.5"></circle>
+            <circle class="mlp-ellipsis" cx="845" cy="228" r="2"></circle>
+            <circle class="mlp-ellipsis" cx="845" cy="238" r="2"></circle>
+            <circle class="mlp-ellipsis" cx="845" cy="248" r="2"></circle>
+            <circle class="mlp-node active" cx="845" cy="270" r="8.5"></circle>
+            <circle class="mlp-node" cx="845" cy="296" r="8.5"></circle>
+          </g>
+
+          <g id="mlp-right-column">
+            <circle class="mlp-node active" cx="905" cy="68" r="8.5"></circle>
+            <circle class="mlp-node" cx="905" cy="96" r="8.5"></circle>
+            <circle class="mlp-node active" cx="905" cy="124" r="8.5"></circle>
+            <circle class="mlp-node" cx="905" cy="152" r="8.5"></circle>
+            <circle class="mlp-node active" cx="905" cy="180" r="8.5"></circle>
+            <circle class="mlp-node" cx="905" cy="208" r="8.5"></circle>
+            <circle class="mlp-ellipsis" cx="905" cy="228" r="2"></circle>
+            <circle class="mlp-ellipsis" cx="905" cy="238" r="2"></circle>
+            <circle class="mlp-ellipsis" cx="905" cy="248" r="2"></circle>
+            <circle class="mlp-node active" cx="905" cy="276" r="8.5"></circle>
+          </g>
+
+          <text class="label" x="845" y="324" text-anchor="middle">MULTILAYER</text>
+          <text class="label" x="845" y="344" text-anchor="middle">PERCEPTRON</text>
+
+          <path class="wire" d="M938 178 L1057 178" marker-end="url(#arrowhead)"></path>
+          <text class="caption" x="948" y="204">UNEMBED</text>
+        </g>
+
+        <!-- Output vector -->
+        <rect class="box" x="1060" y="48" width="61" height="285" rx="10"></rect>
+        <g id="output-content">
+          <g class="number" text-anchor="start" transform="translate(0 -2.5)">
+            <text x="1134" y="74">0</text>
+            <text x="1134" y="98">1</text>
+            <text x="1134" y="122">2</text>
+            <text x="1134" y="146">3</text>
+            <text x="1134" y="170">4</text>
+            <text x="1134" y="194">5</text>
+            <text x="1134" y="218">6</text>
+            <text id="output-result-label" x="1134" y="242">7</text>
+            <text x="1134" y="298">112</text>
+            <text x="1134" y="322">=</text>
+          </g>
+
+          <g id="output-cells" transform="translate(0 -2.5)">
+            <circle class="grid-dot output-cell" data-value="0" cx="1091" cy="69" r="8"></circle>
+            <circle class="grid-dot output-cell" data-value="1" cx="1091" cy="93" r="8"></circle>
+            <circle class="grid-dot output-cell" data-value="2" cx="1091" cy="117" r="8"></circle>
+            <circle class="grid-dot output-cell" data-value="3" cx="1091" cy="141" r="8"></circle>
+            <circle class="grid-dot output-cell" data-value="4" cx="1091" cy="165" r="8"></circle>
+            <circle class="grid-dot output-cell" data-value="5" cx="1091" cy="189" r="8"></circle>
+            <circle class="grid-dot output-cell" data-value="6" cx="1091" cy="213" r="8"></circle>
+            <circle id="output-result-cell" class="grid-dot output-cell" data-value="7" cx="1091" cy="237" r="8"></circle>
+            <circle class="tiny-dot" cx="1091" cy="255" r="2.4"></circle>
+            <circle class="tiny-dot" cx="1091" cy="265" r="2.4"></circle>
+            <circle class="tiny-dot" cx="1091" cy="275" r="2.4"></circle>
+            <circle class="grid-dot output-cell" data-value="112" cx="1091" cy="293" r="8"></circle>
+            <circle class="grid-dot" cx="1091" cy="317" r="8"></circle>
+          </g>
+
+          <text class="caption" x="1091" y="352" text-anchor="middle">114×1</text>
+        </g>
+
+        <rect id="attention-trigger" class="pipeline-trigger" data-block="attention" x="420" y="31" width="236" height="329" rx="14" role="button" tabindex="0">
+          <title>Seleccionar bloque de atencion</title>
+        </rect>
+        <rect id="mlp-trigger" class="pipeline-trigger" data-block="mlp" x="747" y="31" width="196" height="329" rx="14" role="button" tabindex="0">
+          <title>Seleccionar perceptron multicapa</title>
+        </rect>
+        <rect id="output-trigger" class="pipeline-trigger" data-block="output" x="1052" y="40" width="77" height="320" rx="14" role="button" tabindex="0">
+          <title>Seleccionar vector de salida</title>
+        </rect>
+
+        <g id="embedding-focus-layer">
+          <rect class="focus-scrim" x="0" y="0" width="1180" height="365"></rect>
+
+          <g id="embedding-process">
+          <g class="input-cluster token-block-instance" transform="translate(18 0)"></g>
+
+          <path id="input-to-embedding-arrow" class="input-embedding-arrow wire glow" d="M200 188 L334 188" marker-end="url(#arrowhead)"></path>
+          <path id="input-to-embedding-arrow-compact" class="input-embedding-arrow wire glow" d="M200 188 L290 188" marker-end="url(#arrowhead)"></path>
+
+          <g id="embedding-operation" transform="translate(44 0)">
+            <g>
+            <g id="token-embedding-heading">
+            <text class="focus-title" x="476" y="34" text-anchor="middle">TOKEN EMBEDDING</text>
+            <text id="token-embedding-subtitle" class="focus-subtitle" x="476" y="53" text-anchor="middle">114 tokens x 128 dimensiones</text>
+            </g>
+            <rect id="token-embedding-panel" class="focus-panel" x="304" y="68" width="344" height="239" rx="14"></rect>
+
+            <g id="token-embedding-visual">
+            <text class="axis-label" x="354" y="92" text-anchor="middle">0</text>
+            <text class="axis-label" x="382" y="92" text-anchor="middle">1</text>
+            <text class="axis-label" x="410" y="92" text-anchor="middle">2</text>
+            <text class="axis-label" x="438" y="92" text-anchor="middle">3</text>
+            <text class="axis-label" x="466" y="92" text-anchor="middle">4</text>
+            <text class="axis-label" x="506" y="92" text-anchor="middle">...</text>
+            <text class="axis-label" x="552" y="92" text-anchor="middle">126</text>
+            <text class="axis-label" x="592" y="92" text-anchor="middle">127</text>
+
+            <text id="token-embedding-row-x" class="axis-label" x="327" y="121" text-anchor="end">x</text>
+            <text id="token-embedding-row-y" class="axis-label" x="327" y="149" text-anchor="end">y</text>
+            <text id="token-embedding-row-eq" class="axis-label" x="327" y="177" text-anchor="end">113</text>
+            <text class="axis-label full-token-row" x="327" y="215" text-anchor="end">...</text>
+            <text class="axis-label full-token-row" x="327" y="257" text-anchor="end">112</text>
+            <text class="axis-label full-token-row" x="327" y="285" text-anchor="end">113</text>
+
+            <circle class="tiny-dot" cx="354" cy="116" r="7"></circle>
+            <circle class="tiny-dot" cx="382" cy="116" r="7"></circle>
+            <circle class="tiny-dot" cx="410" cy="116" r="7"></circle>
+            <circle class="tiny-dot" cx="438" cy="116" r="7"></circle>
+            <circle class="tiny-dot" cx="466" cy="116" r="7"></circle>
+            <circle class="tiny-dot" cx="492" cy="116" r="2.5"></circle>
+            <circle class="tiny-dot" cx="506" cy="116" r="2.5"></circle>
+            <circle class="tiny-dot" cx="520" cy="116" r="2.5"></circle>
+            <circle class="tiny-dot" cx="552" cy="116" r="7"></circle>
+            <circle class="tiny-dot" cx="592" cy="116" r="7"></circle>
+
+            <circle class="tiny-dot" cx="354" cy="144" r="7"></circle>
+            <circle class="tiny-dot" cx="382" cy="144" r="7"></circle>
+            <circle class="tiny-dot" cx="410" cy="144" r="7"></circle>
+            <circle class="tiny-dot" cx="438" cy="144" r="7"></circle>
+            <circle class="tiny-dot" cx="466" cy="144" r="7"></circle>
+            <circle class="tiny-dot" cx="492" cy="144" r="2.5"></circle>
+            <circle class="tiny-dot" cx="506" cy="144" r="2.5"></circle>
+            <circle class="tiny-dot" cx="520" cy="144" r="2.5"></circle>
+            <circle class="tiny-dot" cx="552" cy="144" r="7"></circle>
+            <circle class="tiny-dot" cx="592" cy="144" r="7"></circle>
+
+            <circle class="tiny-dot" cx="354" cy="172" r="7"></circle>
+            <circle class="tiny-dot" cx="382" cy="172" r="7"></circle>
+            <circle class="tiny-dot" cx="410" cy="172" r="7"></circle>
+            <circle class="tiny-dot" cx="438" cy="172" r="7"></circle>
+            <circle class="tiny-dot" cx="466" cy="172" r="7"></circle>
+            <circle class="tiny-dot" cx="492" cy="172" r="2.5"></circle>
+            <circle class="tiny-dot" cx="506" cy="172" r="2.5"></circle>
+            <circle class="tiny-dot" cx="520" cy="172" r="2.5"></circle>
+            <circle class="tiny-dot" cx="552" cy="172" r="7"></circle>
+            <circle class="tiny-dot" cx="592" cy="172" r="7"></circle>
+
+            <circle class="tiny-dot" cx="354" cy="199" r="2.5"></circle>
+            <circle class="tiny-dot" cx="354" cy="212" r="2.5"></circle>
+            <circle class="tiny-dot" cx="354" cy="225" r="2.5"></circle>
+            <circle class="tiny-dot" cx="382" cy="199" r="2.5"></circle>
+            <circle class="tiny-dot" cx="382" cy="212" r="2.5"></circle>
+            <circle class="tiny-dot" cx="382" cy="225" r="2.5"></circle>
+            <circle class="tiny-dot" cx="410" cy="199" r="2.5"></circle>
+            <circle class="tiny-dot" cx="410" cy="212" r="2.5"></circle>
+            <circle class="tiny-dot" cx="410" cy="225" r="2.5"></circle>
+            <circle class="tiny-dot" cx="438" cy="199" r="2.5"></circle>
+            <circle class="tiny-dot" cx="438" cy="212" r="2.5"></circle>
+            <circle class="tiny-dot" cx="438" cy="225" r="2.5"></circle>
+            <circle class="tiny-dot" cx="466" cy="199" r="2.5"></circle>
+            <circle class="tiny-dot" cx="466" cy="212" r="2.5"></circle>
+            <circle class="tiny-dot" cx="466" cy="225" r="2.5"></circle>
+            <circle class="tiny-dot" cx="552" cy="199" r="2.5"></circle>
+            <circle class="tiny-dot" cx="552" cy="212" r="2.5"></circle>
+            <circle class="tiny-dot" cx="552" cy="225" r="2.5"></circle>
+            <circle class="tiny-dot" cx="592" cy="199" r="2.5"></circle>
+            <circle class="tiny-dot" cx="592" cy="212" r="2.5"></circle>
+            <circle class="tiny-dot" cx="592" cy="225" r="2.5"></circle>
+
+            <circle class="tiny-dot" cx="354" cy="252" r="7"></circle>
+            <circle class="tiny-dot" cx="382" cy="252" r="7"></circle>
+            <circle class="tiny-dot" cx="410" cy="252" r="7"></circle>
+            <circle class="tiny-dot" cx="438" cy="252" r="7"></circle>
+            <circle class="tiny-dot" cx="466" cy="252" r="7"></circle>
+            <circle class="tiny-dot" cx="492" cy="252" r="2.5"></circle>
+            <circle class="tiny-dot" cx="506" cy="252" r="2.5"></circle>
+            <circle class="tiny-dot" cx="520" cy="252" r="2.5"></circle>
+            <circle class="tiny-dot" cx="552" cy="252" r="7"></circle>
+            <circle class="tiny-dot" cx="592" cy="252" r="7"></circle>
+
+            <circle class="tiny-dot" cx="354" cy="280" r="7"></circle>
+            <circle class="tiny-dot" cx="382" cy="280" r="7"></circle>
+            <circle class="tiny-dot" cx="410" cy="280" r="7"></circle>
+            <circle class="tiny-dot" cx="438" cy="280" r="7"></circle>
+            <circle class="tiny-dot" cx="466" cy="280" r="7"></circle>
+            <circle class="tiny-dot" cx="492" cy="280" r="2.5"></circle>
+            <circle class="tiny-dot" cx="506" cy="280" r="2.5"></circle>
+            <circle class="tiny-dot" cx="520" cy="280" r="2.5"></circle>
+            <circle class="tiny-dot" cx="552" cy="280" r="7"></circle>
+            <circle class="tiny-dot" cx="592" cy="280" r="7"></circle>
+            </g>
+            </g>
+
+            <text x="681" y="205" text-anchor="middle" fill="var(--ink)" font-family="Trebuchet MS, Verdana, sans-serif" font-size="54" font-weight="700">+</text>
+
+            <g>
+            <text class="focus-title" x="886" y="72" text-anchor="middle">POSITION EMBEDDING</text>
+            <text class="focus-subtitle" x="886" y="91" text-anchor="middle">3 posiciones x 128 dimensiones</text>
+            <rect class="focus-panel" x="714" y="106" width="344" height="158" rx="14"></rect>
+
+            <g id="position-embedding-visual" transform="translate(15 53)">
+            <text class="axis-label" x="764" y="92" text-anchor="middle">0</text>
+            <text class="axis-label" x="792" y="92" text-anchor="middle">1</text>
+            <text class="axis-label" x="820" y="92" text-anchor="middle">2</text>
+            <text class="axis-label" x="848" y="92" text-anchor="middle">3</text>
+            <text class="axis-label" x="876" y="92" text-anchor="middle">4</text>
+            <text class="axis-label" x="916" y="92" text-anchor="middle">...</text>
+            <text class="axis-label" x="962" y="92" text-anchor="middle">126</text>
+            <text class="axis-label" x="1002" y="92" text-anchor="middle">127</text>
+
+            <text class="axis-label" x="737" y="121" text-anchor="end">0</text>
+            <text class="axis-label" x="737" y="149" text-anchor="end">1</text>
+            <text class="axis-label" x="737" y="177" text-anchor="end">2</text>
+
+            <circle class="tiny-dot" cx="764" cy="116" r="7"></circle>
+            <circle class="tiny-dot" cx="792" cy="116" r="7"></circle>
+            <circle class="tiny-dot" cx="820" cy="116" r="7"></circle>
+            <circle class="tiny-dot" cx="848" cy="116" r="7"></circle>
+            <circle class="tiny-dot" cx="876" cy="116" r="7"></circle>
+            <circle class="tiny-dot" cx="902" cy="116" r="2.5"></circle>
+            <circle class="tiny-dot" cx="916" cy="116" r="2.5"></circle>
+            <circle class="tiny-dot" cx="930" cy="116" r="2.5"></circle>
+            <circle class="tiny-dot" cx="962" cy="116" r="7"></circle>
+            <circle class="tiny-dot" cx="1002" cy="116" r="7"></circle>
+
+            <circle class="tiny-dot" cx="764" cy="144" r="7"></circle>
+            <circle class="tiny-dot" cx="792" cy="144" r="7"></circle>
+            <circle class="tiny-dot" cx="820" cy="144" r="7"></circle>
+            <circle class="tiny-dot" cx="848" cy="144" r="7"></circle>
+            <circle class="tiny-dot" cx="876" cy="144" r="7"></circle>
+            <circle class="tiny-dot" cx="902" cy="144" r="2.5"></circle>
+            <circle class="tiny-dot" cx="916" cy="144" r="2.5"></circle>
+            <circle class="tiny-dot" cx="930" cy="144" r="2.5"></circle>
+            <circle class="tiny-dot" cx="962" cy="144" r="7"></circle>
+            <circle class="tiny-dot" cx="1002" cy="144" r="7"></circle>
+
+            <circle class="tiny-dot" cx="764" cy="172" r="7"></circle>
+            <circle class="tiny-dot" cx="792" cy="172" r="7"></circle>
+            <circle class="tiny-dot" cx="820" cy="172" r="7"></circle>
+            <circle class="tiny-dot" cx="848" cy="172" r="7"></circle>
+            <circle class="tiny-dot" cx="876" cy="172" r="7"></circle>
+            <circle class="tiny-dot" cx="902" cy="172" r="2.5"></circle>
+            <circle class="tiny-dot" cx="916" cy="172" r="2.5"></circle>
+            <circle class="tiny-dot" cx="930" cy="172" r="2.5"></circle>
+            <circle class="tiny-dot" cx="962" cy="172" r="7"></circle>
+            <circle class="tiny-dot" cx="1002" cy="172" r="7"></circle>
+            </g>
+            </g>
+
+            <g id="embedding-equals" class="equals-button" role="button" aria-label="Sumar embeddings" tabindex="0">
+              <rect x="-21" y="-21" width="42" height="42" rx="12"></rect>
+              <text x="0" y="10" text-anchor="middle">=</text>
+            </g>
+          </g>
+          </g>
+
+          <g id="h0-result-layer">
+            <text class="focus-title" x="972" y="72" text-anchor="middle">
+              h<tspan baseline-shift="sub" font-size="12">0</tspan>
+            </text>
+            <text class="focus-subtitle" x="972" y="91" text-anchor="middle">3 tokens x 128 dimensiones</text>
+            <rect class="focus-panel" x="800" y="106" width="344" height="158" rx="14"></rect>
+
+            <g id="h0-visual" transform="translate(86 53)">
+              <text class="axis-label" x="764" y="92" text-anchor="middle">0</text>
+              <text class="axis-label" x="792" y="92" text-anchor="middle">1</text>
+              <text class="axis-label" x="820" y="92" text-anchor="middle">2</text>
+              <text class="axis-label" x="848" y="92" text-anchor="middle">3</text>
+              <text class="axis-label" x="876" y="92" text-anchor="middle">4</text>
+              <text class="axis-label" x="916" y="92" text-anchor="middle">...</text>
+              <text class="axis-label" x="962" y="92" text-anchor="middle">126</text>
+              <text class="axis-label" x="1002" y="92" text-anchor="middle">127</text>
+
+              <text class="axis-label" x="737" y="121" text-anchor="end">0</text>
+              <text class="axis-label" x="737" y="149" text-anchor="end">1</text>
+              <text class="axis-label" x="737" y="177" text-anchor="end">2</text>
+
+              <g id="h0-cells"></g>
+            </g>
+          </g>
+
+          <g id="embedding-back" class="focus-back" transform="translate(1032 314)">
+            <rect width="95" height="32" rx="16"></rect>
+            <text x="47.5" y="21" text-anchor="middle">VOLVER</text>
+          </g>
+        </g>
+      </svg>
+    </section>
+  </main>
+  <section id="logit-view" class="logit-view" aria-hidden="true">
+    <button id="logit-back" class="logit-back" type="button">VOLVER</button>
+    <iframe
+      id="logit-frame"
+      title="Visualizador del logit 112"
+      data-src="grokking-visualizer/visualizador_logit112_superior.html"
+    ></iframe>
+  </section>
+  <script>
+    const svgNamespace = "http://www.w3.org/2000/svg";
+    const mlpConnections = document.querySelector("#mlp-connections");
+    const mlpColumns = [
+      [...document.querySelectorAll("#mlp-left-column .mlp-node")],
+      [...document.querySelectorAll("#mlp-middle-column .mlp-node")],
+      [...document.querySelectorAll("#mlp-right-column .mlp-node")],
+    ];
+
+    function connectMlpColumns(sourceNodes, targetNodes) {
+      sourceNodes.forEach((source) => {
+        targetNodes.forEach((target) => {
+          const connection = document.createElementNS(svgNamespace, "line");
+          connection.setAttribute("class", "mlp-connection");
+          connection.setAttribute("x1", source.getAttribute("cx"));
+          connection.setAttribute("y1", source.getAttribute("cy"));
+          connection.setAttribute("x2", target.getAttribute("cx"));
+          connection.setAttribute("y2", target.getAttribute("cy"));
+          mlpConnections.appendChild(connection);
+        });
+      });
+    }
+
+    connectMlpColumns(mlpColumns[0], mlpColumns[1]);
+    connectMlpColumns(mlpColumns[1], mlpColumns[2]);
+
+    const diagram = document.querySelector(".diagram");
+    const trigger = document.querySelector("#embedding-trigger");
+    const pipelineTriggers = [...document.querySelectorAll(".pipeline-trigger")];
+    const outputTrigger = document.querySelector("#output-trigger");
+    const logitView = document.querySelector("#logit-view");
+    const logitFrame = document.querySelector("#logit-frame");
+    const logitBack = document.querySelector("#logit-back");
+    const back = document.querySelector("#embedding-back");
+    const tokenTemplate = document.querySelector("#token-block");
+    const tokenBlocks = [...document.querySelectorAll(".token-block-instance")];
+    const tokenEmbeddingVisual = document.querySelector(
+      "#token-embedding-visual"
+    );
+    const tokenEmbeddingSubtitle = document.querySelector(
+      "#token-embedding-subtitle"
+    );
+    const embeddingEquals = document.querySelector("#embedding-equals");
+    const h0Visual = document.querySelector("#h0-visual");
+    const h0Cells = document.querySelector("#h0-cells");
+    const initialH0Visual = document.querySelector("#initial-h0-visual");
+    const outputCells = [...document.querySelectorAll(".output-cell")];
+    const outputResultCell = document.querySelector("#output-result-cell");
+    const outputResultLabel = document.querySelector("#output-result-label");
+    const selectedTokenRows = new Map([["147", "312"]]);
+    const tokenValueByRow = new Map([
+      ["69", 0],
+      ["93", 1],
+      ["117", 2],
+      ["141", 3],
+      ["165", 4],
+      ["189", 5],
+      ["213", 6],
+      ["286", 112],
+      ["312", 113],
+    ]);
+    let finalizeTimer = null;
+    let embeddingTransitionTimer = null;
+    let embeddingIsCompact = false;
+
+    [116, 144, 172].forEach((rowY) => {
+      [
+        [764, 7],
+        [792, 7],
+        [820, 7],
+        [848, 7],
+        [876, 7],
+        [902, 2.5],
+        [916, 2.5],
+        [930, 2.5],
+        [962, 7],
+        [1002, 7],
+      ].forEach(([columnX, radius]) => {
+        const cell = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "circle"
+        );
+        cell.setAttribute("class", "tiny-dot");
+        cell.setAttribute("cx", columnX);
+        cell.setAttribute("cy", rowY);
+        cell.setAttribute("r", radius);
+        h0Cells.appendChild(cell);
+      });
+    });
+
+    tokenEmbeddingVisual.querySelectorAll("circle").forEach((cell) => {
+      if (Number(cell.getAttribute("cy")) >= 199) {
+        cell.classList.add("full-token-row");
+      }
+    });
+
+    const embeddingLevelClasses = [
+      "embedding-level-1",
+      "embedding-level-2",
+      "embedding-level-3",
+      "embedding-level-4",
+      "embedding-level-5",
+    ];
+
+    function setEmbeddingCellLevel(cell, level) {
+      cell.classList.remove(...embeddingLevelClasses);
+      if (level > 0) {
+        cell.classList.add(`embedding-level-${level}`);
+      }
+    }
+
+    function getEmbeddingLevel(seed, index, rowY) {
+      return Math.abs(seed * 31 + index * 17 + rowY) % 6;
+    }
+
+    function setEmbeddingRowPattern(container, rowY, seed, active = true) {
+      const cells = [...container.querySelectorAll(`circle[cy="${rowY}"]`)];
+      cells.forEach((cell, index) => {
+        const level = active ? getEmbeddingLevel(seed, index, rowY) : 0;
+        setEmbeddingCellLevel(cell, level);
+      });
+    }
+
+    function syncInitialH0Pattern(selectedValues, active) {
+      const visibleDimensionIndexes = [0, 1, 2, 3, 4, 8, 9];
+      const columnXs = [296, 315, 334];
+      const largeRowYs = [112, 136, 160, 184, 208, 271, 295];
+
+      columnXs.forEach((columnX, position) => {
+        const seed = (selectedValues[position] ?? 0) + position + 1;
+        largeRowYs.forEach((rowY, visibleIndex) => {
+          const cell = initialH0Visual.querySelector(
+            `circle[cx="${columnX}"][cy="${rowY}"]`
+          );
+          const patternIndex = visibleDimensionIndexes[visibleIndex];
+          const level = active
+            ? getEmbeddingLevel(
+                seed,
+                patternIndex,
+                [116, 144, 172][position]
+              )
+            : 0;
+          if (cell) setEmbeddingCellLevel(cell, level);
+        });
+      });
+    }
+
+    function setTokenEmbeddingCompact(shouldCompact) {
+      if (shouldCompact === embeddingIsCompact) return;
+
+      window.clearTimeout(embeddingTransitionTimer);
+      embeddingIsCompact = shouldCompact;
+
+      if (shouldCompact) {
+        // First simplify the 114-row content, then shrink its container.
+        diagram.classList.add("token-embedding-content-compact");
+        embeddingTransitionTimer = window.setTimeout(() => {
+          diagram.classList.add("token-embedding-panel-compact");
+        }, 320);
+      } else {
+        // First restore the full container, then reveal all 114-row cues.
+        diagram.classList.remove("token-embedding-panel-compact");
+        embeddingTransitionTimer = window.setTimeout(() => {
+          diagram.classList.remove("token-embedding-content-compact");
+        }, 480);
+      }
+    }
+
+    function syncEmbeddingVisuals() {
+      const tokenVisual = document.querySelector("#token-embedding-visual");
+      const positionVisual = document.querySelector("#position-embedding-visual");
+      if (!tokenVisual || !positionVisual) return;
+
+      const hasAssignedInput =
+        selectedTokenRows.has("92") || selectedTokenRows.has("119.5");
+      const hasCompleteInput =
+        selectedTokenRows.has("92") && selectedTokenRows.has("119.5");
+      setTokenEmbeddingCompact(hasAssignedInput);
+      embeddingEquals.classList.toggle("enabled", hasCompleteInput);
+      embeddingEquals.setAttribute(
+        "aria-disabled",
+        String(!hasCompleteInput)
+      );
+      if (!hasCompleteInput) {
+        diagram.classList.remove("h0-result");
+      }
+      tokenEmbeddingSubtitle.textContent = hasAssignedInput
+        ? "3 tokens seleccionados x 128 dimensiones"
+        : "114 tokens x 128 dimensiones";
+
+      const selectedValues = [
+        tokenValueByRow.get(selectedTokenRows.get("92")),
+        tokenValueByRow.get(selectedTokenRows.get("119.5")),
+        113,
+      ];
+      const tokenRows = [116, 144, 172];
+      const tokenLabels = [
+        document.querySelector("#token-embedding-row-x"),
+        document.querySelector("#token-embedding-row-y"),
+        document.querySelector("#token-embedding-row-eq"),
+      ];
+
+      if (hasAssignedInput) {
+        selectedValues.forEach((value, index) => {
+          tokenLabels[index].textContent =
+            value === undefined ? "-" : String(value);
+          setEmbeddingRowPattern(
+            tokenVisual,
+            tokenRows[index],
+            value ?? 0,
+            value !== undefined
+          );
+        });
+      } else {
+        tokenLabels.forEach((label, index) => {
+          label.textContent = String(index);
+        });
+
+        [
+          [116, 0],
+          [144, 1],
+          [172, 2],
+          [252, 112],
+          [280, 113],
+        ].forEach(([rowY, tokenValue]) => {
+          setEmbeddingRowPattern(tokenVisual, rowY, tokenValue);
+        });
+      }
+
+      [116, 144, 172].forEach((rowY, position) => {
+        setEmbeddingRowPattern(positionVisual, rowY, position + 1);
+      });
+
+      if (hasCompleteInput) {
+        selectedValues.forEach((value, position) => {
+          setEmbeddingRowPattern(
+            h0Visual,
+            tokenRows[position],
+            value + position + 1
+          );
+        });
+      }
+      syncInitialH0Pattern(selectedValues, hasCompleteInput);
+      syncOutputResult(selectedValues, hasCompleteInput);
+    }
+
+    function syncOutputResult(selectedValues, hasCompleteInput) {
+      outputCells.forEach((cell) => {
+        cell.classList.remove("selected");
+        setEmbeddingCellLevel(cell, 0);
+      });
+
+      if (!hasCompleteInput) {
+        outputResultLabel.textContent = "7";
+        outputResultCell.dataset.value = "7";
+        return;
+      }
+
+      const result = (selectedValues[0] + selectedValues[1]) % 113;
+      let resultCell = outputCells.find(
+        (cell) => Number(cell.dataset.value) === result
+      );
+
+      if (!resultCell) {
+        outputResultLabel.textContent = String(result);
+        outputResultCell.dataset.value = String(result);
+        resultCell = outputResultCell;
+      } else {
+        outputResultLabel.textContent = "7";
+        outputResultCell.dataset.value = "7";
+        if (result === 7) {
+          resultCell = outputResultCell;
+        }
+      }
+
+      const alternatives = outputCells
+        .filter((cell) => cell !== resultCell)
+        .sort((left, right) => {
+          const leftValue = Number(left.dataset.value);
+          const rightValue = Number(right.dataset.value);
+          return (
+            ((leftValue * 17 + result * 13) % 113) -
+            ((rightValue * 17 + result * 13) % 113)
+          );
+        })
+        .slice(0, 2);
+
+      alternatives.forEach((cell, index) => {
+        setEmbeddingCellLevel(cell, index === 0 ? 2 : 1);
+      });
+      setEmbeddingCellLevel(resultCell, 5);
+    }
+
+    function syncTokenSelections() {
+      document
+        .querySelectorAll(".token-block-instance .grid-dot")
+        .forEach((cell) => {
+          const column = cell.getAttribute("cx");
+          const row = cell.getAttribute("cy");
+          cell.classList.toggle(
+            "selected",
+            selectedTokenRows.get(column) === row
+          );
+        });
+      syncEmbeddingVisuals();
+    }
+
+    function selectTokenCell(event) {
+      event.stopPropagation();
+      const cell = event.currentTarget;
+      const column = cell.getAttribute("cx");
+
+      // The third input is always the "=" token at row 113.
+      if (column === "147") return;
+
+      const row = cell.getAttribute("cy");
+      if (row === "312") return;
+
+      if (selectedTokenRows.get(column) === row) {
+        selectedTokenRows.delete(column);
+      } else {
+        selectedTokenRows.set(column, row);
+      }
+      syncTokenSelections();
+    }
+
+    tokenBlocks.forEach((tokenBlock) => {
+      [...tokenTemplate.children].forEach((child) => {
+        tokenBlock.appendChild(child.cloneNode(true));
+      });
+
+      tokenBlock.querySelectorAll(".grid-dot").forEach((cell) => {
+        cell.addEventListener("click", selectTokenCell);
+      });
+    });
+
+    syncTokenSelections();
+
+    function enterEmbeddingFocus() {
+      window.clearTimeout(finalizeTimer);
+      diagram.classList.remove("embedding-final");
+      syncEmbeddingVisuals();
+      diagram.classList.add("embedding-focus");
+      finalizeTimer = window.setTimeout(() => {
+        diagram.classList.add("embedding-final");
+      }, 560);
+    }
+
+    function exitEmbeddingFocus() {
+      window.clearTimeout(finalizeTimer);
+      window.clearTimeout(embeddingTransitionTimer);
+      diagram.classList.remove("h0-result");
+      diagram.classList.remove("embedding-final");
+      diagram.classList.remove("embedding-focus");
+    }
+
+    function showH0Result() {
+      const hasCompleteInput =
+        selectedTokenRows.has("92") && selectedTokenRows.has("119.5");
+      if (hasCompleteInput) {
+        diagram.classList.toggle("h0-result");
+      }
+    }
+
+    function flashPipelineBlock(selectedTrigger) {
+      selectedTrigger.classList.add("clicked");
+      window.setTimeout(() => {
+        selectedTrigger.classList.remove("clicked");
+      }, 180);
+    }
+
+    pipelineTriggers.forEach((blockTrigger) => {
+      blockTrigger.addEventListener("click", () => {
+        flashPipelineBlock(blockTrigger);
+      });
+      blockTrigger.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          blockTrigger.click();
+        }
+      });
+    });
+
+    function openLogitView() {
+      if (!logitFrame.getAttribute("src")) {
+        logitFrame.src = logitFrame.dataset.src;
+      }
+      document.body.classList.add("logit-open");
+      logitView.setAttribute("aria-hidden", "false");
+      window.setTimeout(() => {
+        logitFrame.contentWindow?.dispatchEvent(new Event("resize"));
+        logitBack.focus();
+      }, 520);
+    }
+
+    function closeLogitView() {
+      document.body.classList.remove("logit-open");
+      logitView.setAttribute("aria-hidden", "true");
+      window.setTimeout(() => outputTrigger.focus(), 520);
+    }
+
+    outputTrigger.addEventListener("click", openLogitView);
+    logitBack.addEventListener("click", closeLogitView);
+
+    trigger.addEventListener("click", enterEmbeddingFocus);
+
+    back.addEventListener("click", exitEmbeddingFocus);
+
+    embeddingEquals.addEventListener("click", showH0Result);
+    embeddingEquals.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        showH0Result();
+      }
+    });
+
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        if (document.body.classList.contains("logit-open")) {
+          closeLogitView();
+        } else {
+          exitEmbeddingFocus();
+        }
+      }
+    });
+  </script>
+</body>
+</html>
