@@ -12,11 +12,17 @@ The implementation, interface, and interactive visualizations in this repository
 
 <p align="center">
   <a href="https://youtu.be/D8GOeCFFby4">
-    <img src="https://img.youtube.com/vi/D8GOeCFFby4/hqdefault.jpg" alt="Welch Labs grokking video thumbnail" width="560">
+    <img src="https://img.youtube.com/vi/D8GOeCFFby4/hqdefault.jpg" alt="Welch Labs grokking video thumbnail" width="450">
   </a>
 </p>
 
+<br>
+
+---
+
 ## Logit 112 Surface
+
+The following visualization comes from the trained model used in this project:
 
 <p align="center">
   <img src="assets/readme/Logit_112_XY.png" alt="Logit 112 activation surface across modular-addition inputs x and y" width="850">
