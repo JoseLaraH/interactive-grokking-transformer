@@ -4,6 +4,20 @@ An interactive web visualization of a one-layer Transformer trained on modular a
 
 The project presents the model's complete inference pipeline, from token selection and embeddings to multi-head attention, the multilayer perceptron, output logits, and an interactive 3D logit surface.
 
+## Inspiration
+
+This project was inspired by [Welch Labs' video about grokking and modular addition](https://youtu.be/D8GOeCFFby4).
+
+The implementation, interface, and interactive visualizations in this repository were developed independently to explore the same learning phenomenon through a hands-on Transformer pipeline.
+
+## Logit 112 Surface
+
+<p align="center">
+  <img src="assets/readme/Logit_112_XY.png" alt="Logit 112 activation surface across modular-addition inputs x and y" width="850">
+</p>
+
+The image shows the trained model's `logit 112` across all input pairs in the `x-y` plane. The diagonal structures reveal how the learned representation organizes modular addition, while the highlighted point marks the currently selected input.
+
 ## Features
 
 - Interactive input tokens for `x`, `y`, and `=`.
