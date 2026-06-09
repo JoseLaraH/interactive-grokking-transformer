@@ -16,20 +16,6 @@ The implementation, interface, and interactive visualizations in this repository
   </a>
 </p>
 
-<br>
-
----
-
-## Logit 112 Surface
-
-The following visualization comes from the trained model used in this project:
-
-<p align="center">
-  <img src="assets/readme/Logit_112_XY.png" alt="Logit 112 activation surface across modular-addition inputs x and y" width="850">
-</p>
-
-The image shows the trained model's `logit 112` across all input pairs in the `x-y` plane. The diagonal structures reveal how the learned representation organizes modular addition, while the highlighted point marks the currently selected input.
-
 ## Features
 
 - Interactive input tokens for `x`, `y`, and `=`.
@@ -80,6 +66,16 @@ grokking-visualizer/
 - `app.js` contains the interactions, matrix states, and view navigation.
 - `visualizador_logit112_superior.html` renders the logit surface.
 - `activation_surfaces_seed_0.js` contains the precomputed model data used by the surface visualizer.
+
+## Logit 112 Surface
+
+The following visualization comes from the trained model used in this project:
+
+<p align="center">
+  <img src="assets/readme/Logit_112_XY.png" alt="Logit 112 activation surface across modular-addition inputs x and y" width="850">
+</p>
+
+The image shows the trained model's `logit 112` across all input pairs in the `x-y` plane. The diagonal structures reveal how the learned representation organizes modular addition, while the highlighted point marks the currently selected input.
 
 ## Running Locally
 
