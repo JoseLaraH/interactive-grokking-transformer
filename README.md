@@ -10,6 +10,12 @@ This project was inspired by [Welch Labs' video about grokking and modular addit
 
 The implementation, interface, and interactive visualizations in this repository were developed independently to explore the same learning phenomenon through a hands-on Transformer pipeline.
 
+<p align="center">
+  <a href="https://youtu.be/D8GOeCFFby4">
+    <img src="https://img.youtube.com/vi/D8GOeCFFby4/hqdefault.jpg" alt="Welch Labs grokking video thumbnail" width="560">
+  </a>
+</p>
+
 ## Logit 112 Surface
 
 <p align="center">
