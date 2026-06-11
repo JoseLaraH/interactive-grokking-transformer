@@ -77,27 +77,11 @@ The following visualization comes from the trained model used in this project:
 
 The image shows the trained model's `logit 112` across all input pairs in the `x-y` plane. The diagonal structures reveal how the learned representation organizes modular addition, while the highlighted point marks the currently selected input.
 
-## Running Locally
+## Live Demo
 
-The project is fully static and does not require a backend.
+The interactive visualization is available online:
 
-Open `index.html` directly in a modern browser, or serve the directory locally:
-
-```bash
-python -m http.server 8000
-```
-
-Then visit:
-
-```text
-http://localhost:8000/
-```
-
-## Deployment
-
-The web experience can be deployed on GitHub Pages, Cloudflare Pages, Netlify, or Vercel.
-
-Keep the `grokking-visualizer` directory beside it so the embedded logit visualization and its data remain accessible.
+### [Open Grokking Transformer Visualizer](https://interactive-grokking-transformer.onrender.com/)
 
 ## Interaction Guide
 
