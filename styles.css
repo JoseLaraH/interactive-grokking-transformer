@@ -312,11 +312,13 @@
     #h0-result-layer {
       opacity: 0;
       pointer-events: none;
-      transform: translate(24px, -13px);
+      transform-origin: 0 0;
+      transform-box: view-box;
+      transform: translate(380px, 48px) scale(0.78);
     }
 
     .diagram.h0-result #embedding-process {
-      transform: translate(20px, 54px) scale(0.64);
+      transform: translate(-35px, 48px) scale(0.78);
     }
 
     .diagram.h0-result #embedding-operation {
@@ -334,14 +336,14 @@
     .diagram.h0-result #h0-result-layer {
       opacity: 1;
       pointer-events: all;
-      transform: translate(0, -13px);
+      transform: translate(330px, 48px) scale(0.78);
     }
 
     .equals-button {
       cursor: default;
       opacity: 0.3;
       pointer-events: none;
-      transform: translate(1088px, 185px);
+      transform: translate(1140px, 185px);
       transition: opacity 220ms ease, filter 220ms ease, transform 620ms ease;
     }
 
@@ -370,7 +372,7 @@
     }
 
     .diagram.h0-result .equals-button {
-      transform: translate(1136px, 185px);
+      transform: translate(840px, 192px);
     }
 
     .matrix-cell {
@@ -535,22 +537,405 @@
       fill: var(--ink-soft);
     }
 
-    .focus-back {
+    .focus-back,
+    .focus-next {
       cursor: pointer;
     }
 
-    .focus-back rect {
+    .focus-back rect,
+    .focus-next rect {
       fill: rgba(240, 183, 24, 0.1);
       stroke: var(--accent);
       stroke-width: 2;
     }
 
-    .focus-back text {
+    .focus-back text,
+    .focus-next text {
       font-family: "Trebuchet MS", Verdana, sans-serif;
       font-size: 13px;
       font-weight: 900;
       letter-spacing: 0.08em;
       fill: var(--accent);
+    }
+
+    .embedding-empty-view {
+      position: fixed;
+      inset: 0;
+      z-index: 19;
+      display: grid;
+      place-items: center;
+      padding: 22px;
+      background:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px) 0 0 / 38px 38px,
+        radial-gradient(circle at 54% 48%, rgba(212, 195, 147, 0.07), transparent 30rem),
+        #030402;
+      opacity: 0;
+      transform: translateX(42px);
+      pointer-events: none;
+      overflow: auto;
+      transition: opacity 460ms ease, transform 520ms ease;
+    }
+
+    body.embedding-empty-open {
+      overflow: hidden;
+    }
+
+    body.embedding-empty-open .stage {
+      opacity: 0;
+      transform: translateX(-34px) scale(0.975);
+      filter: blur(5px);
+      pointer-events: none;
+    }
+
+    body.embedding-empty-open .embedding-empty-view {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+
+    .empty-view-back {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      padding: 9px 18px;
+      border: 2px solid var(--accent);
+      border-radius: 16px;
+      color: var(--accent);
+      background: rgba(240, 183, 24, 0.08);
+      font: 900 12px "Trebuchet MS", Verdana, sans-serif;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+    }
+
+    .empty-view-back:hover,
+    .empty-view-back:focus-visible {
+      background: rgba(240, 183, 24, 0.16);
+      outline: none;
+    }
+
+    .embedding-explorer-shell {
+      width: min(1360px, 96vw);
+      padding: 24px 26px 28px;
+      border: 1px solid rgba(212, 195, 147, 0.14);
+      border-radius: 22px;
+      background: rgba(0, 0, 0, 0.72);
+      box-shadow:
+        0 24px 80px rgba(0, 0, 0, 0.72),
+        inset 0 0 0 1px rgba(212, 195, 147, 0.05);
+    }
+
+    .embedding-explorer-header {
+      padding-right: 110px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(212, 195, 147, 0.14);
+    }
+
+    .embedding-explorer-header p,
+    .embedding-curve-heading span {
+      margin: 0 0 6px;
+      color: var(--accent);
+      font: 800 10px/1 "Trebuchet MS", Verdana, sans-serif;
+      letter-spacing: 0.16em;
+    }
+
+    .embedding-explorer-header h1 {
+      margin: 0;
+      color: var(--ink);
+      font: italic 700 clamp(24px, 3vw, 34px)/1.1 Georgia, "Times New Roman", serif;
+      letter-spacing: 0.05em;
+    }
+
+    .embedding-explorer-header > span {
+      display: block;
+      margin-top: 7px;
+      color: var(--ink-soft);
+      font: 13px/1.45 Georgia, "Times New Roman", serif;
+    }
+
+    .embedding-explorer-flow {
+      display: grid;
+      grid-template-columns: 170px 88px 90px 52px minmax(480px, 1fr);
+      align-items: center;
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .embedding-token-panel,
+    .embedding-dimension-panel {
+      text-align: center;
+    }
+
+    .embedding-dimension-panel h2 {
+      margin: 0 0 9px;
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 22px;
+      font-style: italic;
+      font-weight: 400;
+      letter-spacing: 0.12em;
+      text-align: center;
+    }
+
+    .embedding-dimension-panel strong {
+      display: block;
+      margin-top: 8px;
+      color: var(--ink-soft);
+      font: 700 11px "Trebuchet MS", Verdana, sans-serif;
+      letter-spacing: 0.08em;
+    }
+
+    .embedding-token-svg {
+      display: block;
+      width: 170px;
+      height: auto;
+      overflow: visible;
+    }
+
+    .embedding-token-svg .grid-dot,
+    .embedding-token-svg .tiny-dot {
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .embedding-token-svg .tiny-dot.selected {
+      fill: var(--ink);
+      filter: drop-shadow(0 0 5px rgba(212, 195, 147, 0.55));
+    }
+
+    .embedding-token-svg .explorer-dynamic-label {
+      fill: var(--ink);
+      font: 17px Georgia, "Times New Roman", serif;
+    }
+
+    .embedding-dimension-column i {
+      width: 20px;
+      height: 20px;
+      justify-self: center;
+      border: 2px solid var(--ink);
+      border-radius: 50%;
+      background: #211f14;
+    }
+
+    .embedding-dimension-column b {
+      color: var(--ink-soft);
+      font: 700 17px/1 Georgia, "Times New Roman", serif;
+      text-align: center;
+    }
+
+    .embedding-dynamic-token.hidden {
+      visibility: hidden;
+    }
+
+    .embedding-explorer-arrow {
+      position: relative;
+      height: 2px;
+      background: var(--ink-soft);
+    }
+
+    .embedding-explorer-arrow::after {
+      position: absolute;
+      top: -6px;
+      right: -1px;
+      width: 11px;
+      height: 11px;
+      content: "";
+      border-top: 2px solid var(--ink-soft);
+      border-right: 2px solid var(--ink-soft);
+      transform: rotate(45deg);
+    }
+
+    .embedding-explorer-arrow span {
+      position: absolute;
+      top: 13px;
+      left: 50%;
+      color: var(--ink-soft);
+      font: 900 13px "Trebuchet MS", Verdana, sans-serif;
+      letter-spacing: 0.08em;
+      transform: translateX(-50%);
+    }
+
+    .embedding-explorer-arrow.compact {
+      width: 52px;
+    }
+
+    .embedding-dimension-column {
+      display: grid;
+      place-items: center;
+      gap: 7px;
+      min-height: 328px;
+      padding: 14px 10px;
+      border: 2px solid var(--ink-dim);
+      border-radius: 12px;
+      background: rgba(11, 11, 7, 0.58);
+    }
+
+    .embedding-dimension-column i {
+      width: 18px;
+      height: 18px;
+    }
+
+    .embedding-dimension-column i.active {
+      border-color: var(--accent);
+      background: var(--ink);
+      box-shadow: 0 0 9px rgba(240, 183, 24, 0.4);
+    }
+
+    .embedding-curve-panel {
+      min-width: 0;
+      padding: 18px 20px 16px;
+      border: 2px solid var(--ink-soft);
+      border-radius: 14px;
+      background: rgba(11, 11, 7, 0.72);
+      box-shadow: 0 0 12px var(--shadow);
+    }
+
+    .embedding-curve-heading {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .embedding-curve-heading h2 {
+      margin: 0;
+      color: var(--ink);
+      font: italic 700 21px Georgia, "Times New Roman", serif;
+    }
+
+    .embedding-curve-heading output {
+      color: var(--accent);
+      font: 800 12px "Cascadia Mono", Consolas, monospace;
+      white-space: nowrap;
+    }
+
+    #embedding-curve {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin-top: 10px;
+      overflow: visible;
+    }
+
+    .curve-axis {
+      stroke: var(--ink-dim);
+      stroke-width: 1.5;
+    }
+
+    .curve-axis-label {
+      fill: var(--ink-soft);
+      font: italic 15px Georgia, "Times New Roman", serif;
+    }
+
+    .embedding-curve-path {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 0 4px rgba(240, 183, 24, 0.2));
+    }
+
+    .embedding-curve-points circle {
+      fill: var(--ink);
+      opacity: 0.82;
+    }
+
+    .embedding-curve-guide {
+      stroke: rgba(240, 183, 24, 0.48);
+      stroke-width: 1.5;
+      stroke-dasharray: 4 5;
+    }
+
+    .embedding-curve-marker {
+      fill: var(--accent);
+      stroke: #050505;
+      stroke-width: 2;
+      filter: drop-shadow(0 0 6px rgba(240, 183, 24, 0.58));
+    }
+
+    .embedding-x-control {
+      display: grid;
+      grid-template-columns: auto 1fr 74px;
+      align-items: center;
+      gap: 12px;
+      margin-top: 4px;
+      color: var(--ink-soft);
+      font: 800 10px "Trebuchet MS", Verdana, sans-serif;
+      letter-spacing: 0.1em;
+    }
+
+    .embedding-x-control input {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    .embedding-x-control input[type="number"] {
+      padding: 6px 8px;
+      border: 1px solid var(--ink-dim);
+      color: var(--ink);
+      background: #10100c;
+      font: 800 13px "Cascadia Mono", Consolas, monospace;
+    }
+
+    @media (max-width: 1050px) {
+      .embedding-empty-view {
+        display: block;
+        padding: 70px 14px 18px;
+      }
+
+      .embedding-explorer-flow {
+        grid-template-columns: 150px 55px 78px 38px minmax(390px, 1fr);
+        gap: 10px;
+      }
+    }
+
+    @media (max-width: 800px) {
+      .embedding-explorer-shell {
+        width: 100%;
+        padding: 18px 14px;
+      }
+
+      .embedding-explorer-header {
+        padding-right: 0;
+      }
+
+      .embedding-explorer-flow {
+        grid-template-columns: 1fr;
+      }
+
+      .embedding-explorer-arrow,
+      .embedding-explorer-arrow.compact {
+        width: 2px;
+        height: 42px;
+        margin: 0 auto;
+      }
+
+      .embedding-explorer-arrow::after {
+        top: auto;
+        right: -5px;
+        bottom: 0;
+        transform: rotate(135deg);
+      }
+
+      .embedding-explorer-arrow span {
+        top: 12px;
+        left: 14px;
+        transform: none;
+      }
+
+      .embedding-token-panel,
+      .embedding-dimension-panel {
+        width: min(230px, 100%);
+        margin: 0 auto;
+      }
+
+      .embedding-x-control {
+        grid-template-columns: 1fr 70px;
+      }
+
+      .embedding-x-control span {
+        grid-column: 1 / -1;
+      }
     }
 
     @media (max-width: 800px) {

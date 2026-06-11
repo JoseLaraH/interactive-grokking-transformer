@@ -471,21 +471,17 @@
             </g>
             </g>
 
-            <g id="embedding-equals" class="equals-button" role="button" aria-label="Sumar embeddings" tabindex="0">
-              <rect x="-21" y="-21" width="42" height="42" rx="12"></rect>
-              <text x="0" y="10" text-anchor="middle">=</text>
-            </g>
           </g>
           </g>
 
           <g id="h0-result-layer">
-            <text class="focus-title" x="972" y="72" text-anchor="middle">
+            <text class="focus-title" x="886" y="72" text-anchor="middle">
               h<tspan baseline-shift="sub" font-size="12">0</tspan>
             </text>
-            <text class="focus-subtitle" x="972" y="91" text-anchor="middle">3 tokens x 128 dimensiones</text>
-            <rect class="focus-panel" x="800" y="106" width="344" height="158" rx="14"></rect>
+            <text class="focus-subtitle" x="886" y="91" text-anchor="middle">3 tokens x 128 dimensiones</text>
+            <rect class="focus-panel" x="714" y="106" width="344" height="158" rx="14"></rect>
 
-            <g id="h0-visual" transform="translate(86 53)">
+            <g id="h0-visual" transform="translate(15 53)">
               <text class="axis-label" x="764" y="92" text-anchor="middle">0</text>
               <text class="axis-label" x="792" y="92" text-anchor="middle">1</text>
               <text class="axis-label" x="820" y="92" text-anchor="middle">2</text>
@@ -503,6 +499,16 @@
             </g>
           </g>
 
+          <g id="embedding-equals" class="equals-button" role="button" aria-label="Sumar embeddings" tabindex="0">
+            <rect x="-21" y="-21" width="42" height="42" rx="12"></rect>
+            <text x="0" y="10" text-anchor="middle">=</text>
+          </g>
+
+          <g id="embedding-next" class="focus-next" transform="translate(880 314)" role="button" aria-label="Abrir nueva vista" tabindex="0">
+            <rect width="130" height="32" rx="16"></rect>
+            <text x="65" y="21" text-anchor="middle">SIGUIENTE</text>
+          </g>
+
           <g id="embedding-back" class="focus-back" transform="translate(1032 314)">
             <rect width="95" height="32" rx="16"></rect>
             <text x="47.5" y="21" text-anchor="middle">VOLVER</text>
@@ -511,6 +517,74 @@
       </svg>
     </section>
   </main>
+  <section id="embedding-empty-view" class="embedding-empty-view" aria-hidden="true">
+    <button id="embedding-empty-back" class="empty-view-back" type="button">VOLVER</button>
+    <div class="embedding-explorer-shell">
+      <header class="embedding-explorer-header">
+        <p>TOKEN EMBEDDING · PRIMERA DIMENSIÓN</p>
+        <h1>Evolución del embedding de x</h1>
+        <span>Recorre los tokens de 0 a 112 para observar cómo cambia su primera lectura.</span>
+      </header>
+
+      <div class="embedding-explorer-flow">
+        <article class="embedding-token-panel">
+          <svg
+            class="embedding-token-svg"
+            viewBox="0 0 190 365"
+            role="img"
+            aria-label="Matriz original de tokens de 114 por 3"
+          >
+            <g id="embedding-explorer-token-block"></g>
+          </svg>
+        </article>
+
+        <div class="embedding-explorer-arrow">
+          <span>EMBED</span>
+        </div>
+
+        <article class="embedding-dimension-panel">
+          <h2>X</h2>
+          <div class="embedding-dimension-column" id="embedding-dimension-column"></div>
+          <strong>114×1</strong>
+        </article>
+
+        <div class="embedding-explorer-arrow compact" aria-hidden="true"></div>
+
+        <article class="embedding-curve-panel">
+          <div class="embedding-curve-heading">
+            <div>
+              <span>PRIMERA DIMENSIÓN</span>
+              <h2>Lectura a través de los tokens</h2>
+            </div>
+            <output id="embedding-curve-readout">x = 0 · 0.000</output>
+          </div>
+
+          <svg
+            id="embedding-curve"
+            viewBox="0 0 700 300"
+            role="img"
+            aria-label="Evolución de la primera dimensión del embedding para x entre 0 y 112"
+          >
+            <line class="curve-axis" x1="42" y1="150" x2="676" y2="150"></line>
+            <line class="curve-axis" x1="42" y1="24" x2="42" y2="276"></line>
+            <text class="curve-axis-label" x="42" y="294" text-anchor="middle">0</text>
+            <text class="curve-axis-label" x="676" y="294" text-anchor="middle">112</text>
+            <text class="curve-axis-label" x="686" y="146">x</text>
+            <path id="embedding-curve-path" class="embedding-curve-path"></path>
+            <g id="embedding-curve-points" class="embedding-curve-points"></g>
+            <line id="embedding-curve-guide" class="embedding-curve-guide" y1="24" y2="276"></line>
+            <circle id="embedding-curve-marker" class="embedding-curve-marker" r="7"></circle>
+          </svg>
+
+          <label class="embedding-x-control">
+            <span>VALOR DE x</span>
+            <input id="embedding-x-range" type="range" min="0" max="112" value="0">
+            <input id="embedding-x-number" type="number" min="0" max="112" value="0">
+          </label>
+        </article>
+      </div>
+    </div>
+  </section>
   <section id="logit-view" class="logit-view" aria-hidden="true">
     <button id="logit-back" class="logit-back" type="button">VOLVER</button>
     <iframe

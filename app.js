@@ -31,6 +31,30 @@ const svgNamespace = "http://www.w3.org/2000/svg";
     const logitFrame = document.querySelector("#logit-frame");
     const logitBack = document.querySelector("#logit-back");
     const back = document.querySelector("#embedding-back");
+    const embeddingNext = document.querySelector("#embedding-next");
+    const embeddingEmptyView = document.querySelector("#embedding-empty-view");
+    const embeddingEmptyBack = document.querySelector("#embedding-empty-back");
+    const embeddingExplorerTokenBlock = document.querySelector(
+      "#embedding-explorer-token-block"
+    );
+    const embeddingDimensionColumn = document.querySelector(
+      "#embedding-dimension-column"
+    );
+    const embeddingCurvePath = document.querySelector("#embedding-curve-path");
+    const embeddingCurvePoints = document.querySelector(
+      "#embedding-curve-points"
+    );
+    const embeddingCurveGuide = document.querySelector(
+      "#embedding-curve-guide"
+    );
+    const embeddingCurveMarker = document.querySelector(
+      "#embedding-curve-marker"
+    );
+    const embeddingCurveReadout = document.querySelector(
+      "#embedding-curve-readout"
+    );
+    const embeddingXRange = document.querySelector("#embedding-x-range");
+    const embeddingXNumber = document.querySelector("#embedding-x-number");
     const tokenTemplate = document.querySelector("#token-block");
     const tokenBlocks = [...document.querySelectorAll(".token-block-instance")];
     const tokenEmbeddingVisual = document.querySelector(
@@ -111,6 +135,177 @@ const svgNamespace = "http://www.w3.org/2000/svg";
     function getEmbeddingLevel(seed, index, rowY) {
       return Math.abs(seed * 31 + index * 17 + rowY) % 6;
     }
+
+    function getFirstEmbeddingValue(tokenValue) {
+      const primary = Math.sin((tokenValue / 113) * Math.PI * 8 + 0.42);
+      const detail = Math.sin((tokenValue / 113) * Math.PI * 18 + 1.1);
+      return primary * 0.84 + detail * 0.1;
+    }
+
+    const firstEmbeddingValues = Array.from(
+      { length: 113 },
+      (_, tokenValue) => getFirstEmbeddingValue(tokenValue)
+    );
+    let embeddingExplorerY = 112;
+
+    function syncEmbeddingExplorerTokenBlock(xValue, yValue) {
+      const visibleRows = new Map([
+        [0, 69],
+        [1, 93],
+        [2, 117],
+        [3, 141],
+        [4, 165],
+        [5, 189],
+        [6, 213],
+        [112, 286],
+        [113, 312],
+      ]);
+      const dynamicValues = [...new Set([xValue, yValue])]
+        .filter((value) => !visibleRows.has(value));
+      const dynamicRows = new Map(
+        dynamicValues.map((value, index) => [
+          value,
+          [238, 250, 262][index] ?? 250,
+        ])
+      );
+
+      embeddingExplorerTokenBlock
+        .querySelectorAll(".selected")
+        .forEach((cell) => cell.classList.remove("selected"));
+      embeddingExplorerTokenBlock
+        .querySelectorAll("[data-explorer-radius]")
+        .forEach((cell) => {
+          cell.setAttribute("r", cell.dataset.explorerRadius);
+          delete cell.dataset.explorerRadius;
+        });
+      embeddingExplorerTokenBlock
+        .querySelectorAll(".explorer-dynamic-label")
+        .forEach((label) => label.remove());
+
+      dynamicRows.forEach((rowY, value) => {
+        const label = document.createElementNS(svgNamespace, "text");
+        label.setAttribute("class", "explorer-dynamic-label");
+        label.setAttribute("x", "60");
+        label.setAttribute("y", String(rowY + 5));
+        label.setAttribute("text-anchor", "end");
+        label.textContent = String(value);
+        embeddingExplorerTokenBlock.appendChild(label);
+      });
+
+      [
+        [92, xValue],
+        [119.5, yValue],
+        [147, 113],
+      ].forEach(([columnX, tokenValue]) => {
+        const rowY = visibleRows.get(tokenValue) ?? dynamicRows.get(tokenValue);
+        const cell = embeddingExplorerTokenBlock.querySelector(
+          `circle[cx="${columnX}"][cy="${rowY}"]`
+        );
+        if (!cell) return;
+        cell.classList.add("selected");
+        if (dynamicRows.has(tokenValue)) {
+          cell.dataset.explorerRadius = cell.getAttribute("r");
+          cell.setAttribute("r", "9");
+        }
+      });
+    }
+
+    function renderEmbeddingExplorerStructure() {
+      [...tokenTemplate.children].forEach((child) => {
+        embeddingExplorerTokenBlock.appendChild(child.cloneNode(true));
+      });
+
+      const visibleTokens = [
+        0, 1, 2, 3, 4, 5, 6, 7, "...", "selected", 112, 113,
+      ];
+      visibleTokens.forEach((token) => {
+        if (token === "...") {
+          const ellipsis = document.createElement("b");
+          ellipsis.textContent = "⋮";
+          embeddingDimensionColumn.appendChild(ellipsis);
+          return;
+        }
+        const cell = document.createElement("i");
+        if (token === "selected") {
+          cell.className = "embedding-dynamic-token hidden";
+          cell.dataset.dynamicCell = "true";
+        } else {
+          cell.dataset.token = String(token);
+        }
+        embeddingDimensionColumn.appendChild(cell);
+      });
+
+      const chartLeft = 42;
+      const chartRight = 676;
+      const chartCenterY = 150;
+      const chartAmplitude = 116;
+      const points = firstEmbeddingValues.map((value, tokenValue) => {
+        const x = chartLeft + (tokenValue / 112) * (chartRight - chartLeft);
+        const y = chartCenterY - value * chartAmplitude;
+        return { x, y };
+      });
+
+      embeddingCurvePath.setAttribute(
+        "d",
+        points
+          .map(({ x, y }, index) => `${index === 0 ? "M" : "L"}${x.toFixed(2)} ${y.toFixed(2)}`)
+          .join(" ")
+      );
+
+      points.forEach(({ x, y }, tokenValue) => {
+        if (tokenValue % 2 !== 0 && tokenValue !== 112) return;
+        const point = document.createElementNS(svgNamespace, "circle");
+        point.setAttribute("cx", x);
+        point.setAttribute("cy", y);
+        point.setAttribute("r", "2.5");
+        embeddingCurvePoints.appendChild(point);
+      });
+    }
+
+    function setEmbeddingExplorerToken(rawValue) {
+      const tokenValue = Math.max(
+        0,
+        Math.min(112, Number.parseInt(rawValue, 10) || 0)
+      );
+      const value = firstEmbeddingValues[tokenValue];
+      const chartX = 42 + (tokenValue / 112) * (676 - 42);
+      const chartY = 150 - value * 116;
+
+      embeddingXRange.value = String(tokenValue);
+      embeddingXNumber.value = String(tokenValue);
+      embeddingCurveReadout.textContent =
+        `x = ${tokenValue} · ${value.toFixed(3)}`;
+      embeddingCurveGuide.setAttribute("x1", chartX);
+      embeddingCurveGuide.setAttribute("x2", chartX);
+      embeddingCurveMarker.setAttribute("cx", chartX);
+      embeddingCurveMarker.setAttribute("cy", chartY);
+
+      syncEmbeddingExplorerTokenBlock(tokenValue, embeddingExplorerY);
+
+      const needsDynamicRow = tokenValue > 7 && tokenValue !== 112;
+      embeddingDimensionColumn
+        .querySelectorAll(".embedding-dynamic-token")
+        .forEach((element) => {
+          element.classList.toggle("hidden", !needsDynamicRow);
+          element.dataset.token = needsDynamicRow ? String(tokenValue) : "";
+        });
+
+      embeddingDimensionColumn.querySelectorAll("i").forEach((cell) => {
+        cell.classList.toggle(
+          "active",
+          Number(cell.dataset.token) === tokenValue
+        );
+        if (Number(cell.dataset.token) === tokenValue) {
+          const intensity = 0.22 + Math.abs(value) * 0.76;
+          cell.style.background = `rgba(212, 195, 147, ${intensity})`;
+        } else {
+          cell.style.background = "";
+        }
+      });
+    }
+
+    renderEmbeddingExplorerStructure();
+    setEmbeddingExplorerToken(0);
 
     function setEmbeddingRowPattern(container, rowY, seed, active = true) {
       const cells = [...container.querySelectorAll(`circle[cy="${rowY}"]`)];
@@ -398,8 +593,38 @@ const svgNamespace = "http://www.w3.org/2000/svg";
       window.setTimeout(() => outputTrigger.focus(), 520);
     }
 
+    function openEmbeddingEmptyView() {
+      const selectedX = tokenValueByRow.get(selectedTokenRows.get("92"));
+      const selectedY = tokenValueByRow.get(selectedTokenRows.get("119.5"));
+      embeddingExplorerY = selectedY ?? 112;
+      setEmbeddingExplorerToken(selectedX ?? 0);
+      document.body.classList.add("embedding-empty-open");
+      embeddingEmptyView.setAttribute("aria-hidden", "false");
+      window.setTimeout(() => embeddingEmptyBack.focus(), 520);
+    }
+
+    function closeEmbeddingEmptyView() {
+      document.body.classList.remove("embedding-empty-open");
+      embeddingEmptyView.setAttribute("aria-hidden", "true");
+      window.setTimeout(() => embeddingNext.focus(), 520);
+    }
+
     outputTrigger.addEventListener("click", openLogitView);
     logitBack.addEventListener("click", closeLogitView);
+    embeddingNext.addEventListener("click", openEmbeddingEmptyView);
+    embeddingNext.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openEmbeddingEmptyView();
+      }
+    });
+    embeddingEmptyBack.addEventListener("click", closeEmbeddingEmptyView);
+    embeddingXRange.addEventListener("input", () => {
+      setEmbeddingExplorerToken(embeddingXRange.value);
+    });
+    embeddingXNumber.addEventListener("input", () => {
+      setEmbeddingExplorerToken(embeddingXNumber.value);
+    });
 
     trigger.addEventListener("click", enterEmbeddingFocus);
 
@@ -415,7 +640,9 @@ const svgNamespace = "http://www.w3.org/2000/svg";
 
     window.addEventListener("keydown", (event) => {
       if (event.key === "Escape") {
-        if (document.body.classList.contains("logit-open")) {
+        if (document.body.classList.contains("embedding-empty-open")) {
+          closeEmbeddingEmptyView();
+        } else if (document.body.classList.contains("logit-open")) {
           closeLogitView();
         } else {
           exitEmbeddingFocus();
